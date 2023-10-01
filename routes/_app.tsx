@@ -13,7 +13,11 @@ export default function App({ Component }: AppProps) {
       </head>
       <body class="w-full">
         <Component />
-        <ClientScripts />
+        {
+          /* For some reason the script is inserted twice in /read/... due to the below, even though this
+         layout is supposedly skipped */
+        }
+        {/* <ClientScripts /> */}
         {
           /* <script src="https://unpkg.com/twind/twind.umd.js"></script>
         <script src="
