@@ -105,11 +105,11 @@ export default class Reader {
     this._page = page;
     // TODO added
     console.log("Read start check");
-    if (window.document.visibilityState === "visible") {
-      // TODO added
-      console.log("Starting reading");
-      this.startReading();
-    }
+    // if (window.document.visibilityState === "visible") {
+    // TODO added
+    console.log("Starting reading");
+    this.startReading();
+    // }
   }
   public unloadPage() {
     this.stopReading();

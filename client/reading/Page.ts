@@ -26,7 +26,7 @@ function countTextNodeWords(element: Element): number {
   // It's important the count the words of each individual text node
   // since that's how parseDocumentContent does it.
   let wordCount = 0;
-  for (const childNode of element.childNodes) {
+  for (const childNode of Array.from(element.childNodes)) {
     if (childNode.nodeType === Node.TEXT_NODE) {
       wordCount += getWordCount(childNode);
     } else if (isElement(childNode)) {
@@ -48,7 +48,7 @@ function findContentElements(
 ): ContentElement[] {
   let containsTextNodeContent = false,
     containsBlockElement = false;
-  for (let child of element.childNodes) {
+  for (let child of Array.from(element.childNodes)) {
     if (child.nodeType === Node.TEXT_NODE && child.textContent.trim().length) {
       containsTextNodeContent = true;
     } else if (isBlockElement(child)) {
@@ -66,7 +66,7 @@ function findContentElements(
     // If at least one traditional block-level element was present in the child nodes,
     // and no Text Nodes, then we recursively find the ContentElements descending
     // from each block-level child element and add them to the list of contentElements.
-    for (let child of element.children) {
+    for (let child of Array.from(element.children)) {
       findContentElements(child, contentElements);
     }
   }

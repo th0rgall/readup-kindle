@@ -3,8 +3,14 @@
     "@babel/cli": "^7.23.0",
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.22.20",
+    "browserify": "^17.0.0",
+    "classlist-polyfill": "^1.2.0",
+    "conglomerate-element-dataset": "^1.4.1",
     "core-js": "^3.32.2",
     "core-js-pure": "^3.32.2",
+    "element-dataset": "^2.2.6",
+    "element-matches-polyfill": "^1.0.0",
+    "element-remove-polyfill": "^1.1.0",
     "esbuild": "^0.19.4"
   },
   "type": "module"

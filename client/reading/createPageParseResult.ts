@@ -9,7 +9,7 @@
 // You should have received a copy of the GNU Affero General Public License version 3 along with Foobar. If not, see <https://www.gnu.org/licenses/>.
 
 import { MetadataParseResult } from "./parseDocumentMetadata.ts";
-import ParseResult from "../contentParsing/ParseResult";
+import ParseResult from "../contentParsing/ParseResult.ts";
 
 export default function createPageParseResult(
   metadata: MetadataParseResult,

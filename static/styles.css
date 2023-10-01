@@ -12,3 +12,10 @@ html.kindle {
 #readup-article-container p {
     margin-bottom: 1rem;
 }
+
+.readup-progress {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background-color: #eee;
+}

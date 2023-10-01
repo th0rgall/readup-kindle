@@ -1,13 +1,25 @@
-// import "core-js/actual/error";
+// https://github.com/evanw/esbuild/issues/2631
+// maybe related: https://github.com/evanw/esbuild/issues/1147
+// import "core-js/actual/object/get-own-property-descriptor";
+// import "core-js/actual/object/get-own-property-descriptors";
+// import "core-js/actual/reflect/get-own-property-descriptor";
+// The below untranspiled ES6 APIs are used in the reader/metad
+// Polyfill them!
+// used in metadata parser (at least)
+//
+// import "core-js/actual/array/from";
+// import "core-js/actual/array/find";
+// // used in parseDocument
+// import "core-js/actual/string/ends-with";
 
-// import parseDocumentContent from "./client/contentParsing/parseDocumentContent.ts";
-// import pruneDocument from "./client/contentParsing/pruneDocument.ts";
-// import Page from "./client/reading/Page.ts";
+import parseDocumentContent from "./client/contentParsing/parseDocumentContent.ts";
+import pruneDocument from "./client/contentParsing/pruneDocument.ts";
+import Page from "./client/reading/Page.ts";
 import Reader from "./client/reading/Reader.ts";
-// import parseDocumentMetadata from "./client/reading/parseDocumentMetadata.ts";
-// import styleArticleDocument, {
-//   createByline,
-// } from "./client/reading/styleArticleDocument.ts";
+import parseDocumentMetadata from "./client/reading/parseDocumentMetadata.ts";
+import styleArticleDocument, {
+  createByline,
+} from "./client/reading/styleArticleDocument.ts";
 
 const viewportHeight = $(window).height();
 const width = document.body.clientWidth;
@@ -48,8 +60,11 @@ $(document).ready(function () {
 
   const docContainer = document.getElementById(containerId);
   if (docContainer) {
+    // we polyfilled this...
+    docContainer.prepend();
+    const progress = $("<div><div>").addClass("readup-progress");
     const reader = new Reader((event) => {
-      console.log("Hoera!", event);
+      progress.html(event.percentComplete.toFixed(0));
       // eventPageApi
       //   .commitReadState(
       //     {
@@ -65,40 +80,48 @@ $(document).ready(function () {
       //   // TODO PROXY EXT: native messagingContext has ProblemDetails here
       //   .catch((error) => console.error(error));
     });
+    console.log("Constructed reader");
 
-    // const metadataParseResult = parseDocumentMetadata({
-    //   // url: documentLocation,
-    //   url: window.location,
-    // });
+    const metadataParseResult = parseDocumentMetadata({
+      // url: documentLocation,
+      url: window.location,
+    });
 
-    // const contentParseResult = parseDocumentContent({
-    //   // url: documentLocation,
-    //   url: window.location,
-    // });
+    const contentParseResult = parseDocumentContent({
+      // url: documentLocation,
+      url: window.location,
+    });
 
-    // const parseResult = pruneDocument(contentParseResult);
-    // const contentRoot = parseResult.contentRoot;
-    // const scrollRoot = parseResult.scrollRoot;
+    const parseResult = pruneDocument(contentParseResult);
+    const contentRoot = parseResult.contentRoot;
+    const scrollRoot = parseResult.scrollRoot;
 
-    // // PROXY EXT NOTE: userScrollContainer was true in web. Needed?
-    // styleArticleDocument({
-    //   header: {
-    //     // title: metadataParseResult.metadata.article.title,
-    //     title: "Test!",
-    //     //
-    //     // byline: createByline(metadataParseResult.metadata.article.authors),
-    //     byline: createByline([{ name: "Author 1" }]),
-    //   },
-    //   transitionElement: document.documentElement,
-    //   // completeTransition works on the <html> element,
-    //   // which results in a longer flash in dark mode (0 opacity = white)
-    //   // TODO: target the body in this styleArticleDocument, instead of in this file?
-    //   // completeTransition: true
-    // });
+    // PROXY EXT NOTE: userScrollContainer was true in web. Needed?
+    styleArticleDocument({
+      header: {
+        // title: metadataParseResult.metadata.article.title,
+        title: "Test!",
+        //
+        // byline: createByline(metadataParseResult.metadata.article.authors),
+        byline: createByline([{ name: "Author 1" }]),
+      },
+      transitionElement: document.documentElement,
+      // completeTransition works on the <html> element,
+      // which results in a longer flash in dark mode (0 opacity = white)
+      // TODO: target the body in this styleArticleDocument, instead of in this file?
+      // completeTransition: true
+    });
 
-    // const page = new Page(contentParseResult.primaryTextContainers);
-    // // page.setReadState(result.userPage.readState);
-    // reader.loadPage(page);
+    const page = new Page(contentParseResult.primaryTextContainers);
+    // Readup has removed our styles 🤷‍♂️ re-add
+    $(document.createElement("link")).attr({
+      href: "/styles.css",
+      type: "text/css",
+      rel: "stylesheet",
+    }).appendTo("head");
+    $("body").append(progress);
+    // page.setReadState(result.userPage.readState);
+    reader.loadPage(page);
   }
 });
 

@@ -483,11 +483,13 @@ export function applyDisplayPreferenceToArticleDocument(
   } else {
     scheme = "dark";
   }
-  document.documentElement.dataset["com_readup_theme"] = scheme;
+  // document.documentElement.dataset["com_readup_theme"] = scheme;
+  document.documentElement.setAttribute("data-com_readup_theme", scheme);
   // set text size
-  document.getElementById("com_readup_article").dataset[
-    "com_readup_text_size"
-  ] = preference ? preference.textSize.toString() : "1";
+  document.getElementById("com_readup_article")?.setAttribute(
+    "data-com_readup_text_size",
+    preference ? preference.textSize.toString() : "1",
+  );
   // hide or show links
   const anchors = Array.from(document.getElementsByTagName("a"));
   if (preference == null || preference.hideLinks) {
@@ -496,7 +498,7 @@ export function applyDisplayPreferenceToArticleDocument(
     });
   } else {
     anchors.forEach((a) => {
-      a.setAttribute("href", a.dataset["com_readup_href"]);
+      a.setAttribute("href", a.getAttribute("data-com_readup_href")!);
     });
   }
 }
@@ -546,8 +548,10 @@ export default function styleArticleDocument({
     }
   });
   for (const elementName in obsoleteStyles) {
-    for (const element of document.getElementsByTagName(elementName)) {
-      for (const attributeName of obsoleteStyles[elementName]) {
+    for (
+      const element of Array.from(document.getElementsByTagName(elementName))
+    ) {
+      for (const attributeName of Array.from(obsoleteStyles[elementName])) {
         element.removeAttribute(attributeName);
       }
     }
@@ -569,7 +573,7 @@ export default function styleArticleDocument({
   transitionElement.style.transition = transitionTransition;
   // cache link hrefs
   Array.from(document.getElementsByTagName("a")).forEach((a) => {
-    a.dataset["com_readup_href"] = a.href;
+    a.setAttribute("data-com_readup_href", a.href);
   });
   // add custom classes
   document.documentElement.id = "com_readup_document";

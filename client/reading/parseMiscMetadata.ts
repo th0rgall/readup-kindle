@@ -58,7 +58,7 @@ export default function parseMiscMetadata(
       tags: [],
       pageLinks: [],
       imageUrl: getElementAttribute<HTMLMetaElement>(
-        document.querySelector('meta[name="twitter:image"i]'),
+        document.querySelector('meta[name="twitter:image"]'),
         (e) => e.content,
       ),
     },

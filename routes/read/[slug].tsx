@@ -69,11 +69,14 @@ export default async function Read(req: Request, ctx: RouteContext) {
   return (
     // height: 100% helps us get a JS-scrollable inner container
     // somehow the html/body container couldn't be scrolled
-    <div
-      id="readup-article-container"
-      class={tw(articleStyles)}
-      dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
-    >
-    </div>
+    <>
+      <div class="readup-progress"></div>
+      <div
+        id="readup-article-container"
+        class={tw(articleStyles)}
+        dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
+      >
+      </div>
+    </>
   );
 }
