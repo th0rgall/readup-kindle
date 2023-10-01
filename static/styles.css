@@ -1,0 +1,11 @@
+html {
+    font-size: 38px;
+}
+
+ #readup-article-container {
+    overflow-y: scroll;
+    height: 100%;
+}
+#readup-article-container p {
+    margin-bottom: 1rem;
+}
