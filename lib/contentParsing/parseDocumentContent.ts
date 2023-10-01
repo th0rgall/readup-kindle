@@ -16,13 +16,13 @@ import GraphEdge from "./GraphEdge.ts";
 import TextContainer from "./TextContainer.ts";
 import ChildNodeSearchResult from "./ChildNodeSearchResult.ts";
 import {
-  zipContentLineages,
   buildLineage,
+  findWordsInAttributes,
+  getWordCount,
   isElement,
   isImageContainerElement,
-  findWordsInAttributes,
   isValidImgElement,
-  getWordCount,
+  zipContentLineages,
 } from "./utils.ts";
 import ParseResult from "./ParseResult.ts";
 import { isValidContent as isValidFigureContent } from "./figureContent.ts";
@@ -46,18 +46,18 @@ const recircRegex = /^[^:]+:.+$/;
 // misc
 function findDescendantsMatchingQuerySelectors(
   element: Element,
-  selectors: string[]
+  selectors: string[],
 ) {
   return selectors
     .map((selector) => element.querySelectorAll(selector))
     .reduce<Element[]>(
       (elements, element) => elements.concat(Array.from(element)),
-      []
+      [],
     );
 }
 function searchUpLineage(
   lineage: Node[],
-  test: (node: Node, index: number) => boolean
+  test: (node: Node, index: number) => boolean,
 ) {
   for (let i = lineage.length - 1; i >= 0; i--) {
     const ancestor = lineage[i];
@@ -71,7 +71,7 @@ function selectElements(arg0: ElementSelector | ElementSelector[]): Element[] {
   if (Array.isArray(arg0)) {
     return arg0.reduce<Element[]>(
       (elements, selector) => elements.concat(selectElements(selector)),
-      []
+      [],
     );
   }
   if (typeof arg0 === "string") {
@@ -83,7 +83,7 @@ function selectElements(arg0: ElementSelector | ElementSelector[]): Element[] {
 // filtering
 function areContainerAttributesValid(
   element: Element,
-  config: ContainerFilterConfig
+  config: ContainerFilterConfig,
 ) {
   const words = findWordsInAttributes(element);
   return !words.some(
@@ -92,12 +92,12 @@ function areContainerAttributesValid(
         config.attributeWordPartBlacklist.some((wordPart) =>
           word.includes(wordPart)
         )) &&
-      !words.some((word) => config.attributeFullWordWhitelist.includes(word))
+      !words.some((word) => config.attributeFullWordWhitelist.includes(word)),
   );
 }
 function isImageContainerMetadataValid(
   image: ImageContainer,
-  config: ImageContainerMetadataConfig
+  config: ImageContainerMetadataConfig,
 ) {
   const meta = (image.caption || "") + " " + (image.credit || "");
   return !(
@@ -135,7 +135,7 @@ function isTextContentValid(block: Element, config: TextContainerFilterConfig) {
 }
 function shouldSearchForContent(
   element: Element,
-  config: ContainerSearchConfig
+  config: ContainerSearchConfig,
 ) {
   if (
     config.nodeNameBlacklist.some((nodeName) => element.nodeName === nodeName)
@@ -151,7 +151,7 @@ function shouldSearchForContent(
 const findTextContainers = (function () {
   function findClosestTextContainerElement(
     lineage: Node[],
-    config: TextContainerSelectionConfig
+    config: TextContainerSelectionConfig,
   ) {
     return searchUpLineage(
       lineage,
@@ -162,52 +162,52 @@ const findTextContainers = (function () {
           .slice(0, index)
           .some((ancestor) =>
             config.ancestorNodeNameBlacklist.includes(ancestor.nodeName)
-          )
+          ),
     ) as Element;
   }
   function addTextNode(
     node: Node,
     lineage: Element[],
     config: Config,
-    containers: TextContainer[]
+    containers: TextContainer[],
   ) {
     // add text nodes with no words to preserve whitespace in valid containers. filter containers after the
     // entire tree has been processed.
     // find the closest text container element
     const containerElement = findClosestTextContainerElement(
       lineage,
-      config.textContainerSelection
+      config.textContainerSelection,
     );
     // only process the text node if a text container was found
     if (
       containerElement &&
       !config.textContainerSearch.descendantNodeNameBlacklist.some(
-        (nodeName) => !!containerElement.getElementsByTagName(nodeName).length
+        (nodeName) => !!containerElement.getElementsByTagName(nodeName).length,
       )
     ) {
       // capture lineage
       let containerLineage: Node[];
       const transpositionRule = config
         ? config.transpositions.find((rule) =>
-            rule.elements.some((element) => element === containerElement)
-          )
+          rule.elements.some((element) => element === containerElement)
+        )
         : null;
       if (transpositionRule) {
         containerLineage = transpositionRule.lineage.concat(containerElement);
       } else {
         containerLineage = lineage.slice(
           0,
-          lineage.indexOf(containerElement) + 1
+          lineage.indexOf(containerElement) + 1,
         );
       }
       // create the text container and add to container array or merge with existing container
       const textContainer = new TextContainer(
           containerLineage,
           [(lineage as Node[]).concat(node)],
-          getWordCount(node)
+          getWordCount(node),
         ),
         existingContainer = containers.find(
-          (container) => container.containerElement === containerElement
+          (container) => container.containerElement === containerElement,
         );
       if (existingContainer) {
         existingContainer.mergeContent(textContainer);
@@ -220,7 +220,7 @@ const findTextContainers = (function () {
     node: Node,
     lineage: Element[],
     config: Config,
-    containers: TextContainer[] = []
+    containers: TextContainer[] = [],
   ) {
     // guard against processing undesirable nodes
     if (
@@ -247,18 +247,18 @@ function groupTextContainersByDepth(containers: TextContainer[]) {
     (depthGroups, container) => {
       const containerDepth = container.containerLineage.length,
         existingGroup = depthGroups.find(
-          (group) => group.depth === containerDepth
+          (group) => group.depth === containerDepth,
         );
       if (existingGroup) {
         existingGroup.add(container);
       } else {
         depthGroups.push(
-          new TextContainerDepthGroup(containerDepth, container)
+          new TextContainerDepthGroup(containerDepth, container),
         );
       }
       return depthGroups;
     },
-    []
+    [],
   );
 }
 
@@ -278,7 +278,7 @@ function findTraversalPaths(group: TextContainerDepthGroup) {
         foundPeers = peers.filter(
           (peer) =>
             peer.containerLineage[containerLineageIndex] ===
-            member.containerLineage[containerLineageIndex]
+              member.containerLineage[containerLineageIndex],
         );
       if (foundPeers.length) {
         paths.push(
@@ -287,9 +287,9 @@ function findTraversalPaths(group: TextContainerDepthGroup) {
             frequency: foundPeers.length,
             wordCount: foundPeers.reduce(
               (sum, peer) => (sum += peer.wordCount),
-              0
+              0,
             ),
-          })
+          }),
         );
         foundPeers.forEach((peer) => {
           peers.splice(peers.indexOf(peer), 1);
@@ -316,7 +316,7 @@ const findImageContainers = (function () {
   function addFigureContent(
     element: Element,
     config: ImageContainerContentConfig,
-    contentElements: Node[] = []
+    contentElements: Node[] = [],
   ) {
     if (isValidFigureContent(element, config)) {
       contentElements.push(element);
@@ -330,18 +330,18 @@ const findImageContainers = (function () {
     element: Element,
     lineage: Element[],
     config: Config,
-    images: ImageContainer[]
+    images: ImageContainer[],
   ) {
     if (
       shouldSearchForContent(element, config.imageContainerSearch) &&
       !config.imageContainerSearch.descendantNodeNameBlacklist.some(
-        (nodeName) => !!element.getElementsByTagName(nodeName).length
+        (nodeName) => !!element.getElementsByTagName(nodeName).length,
       )
     ) {
       const imgElements = Array.from(
           element.nodeName === "IMG"
             ? [element as HTMLImageElement]
-            : element.getElementsByTagName("img")
+            : element.getElementsByTagName("img"),
         ),
         validImgElements = imgElements.filter((element) =>
           isValidImgElement(element)
@@ -356,7 +356,7 @@ const findImageContainers = (function () {
               (child) =>
                 child.nodeName === "SOURCE" ||
                 child.nodeName === "META" ||
-                child.nodeName === "IMG"
+                child.nodeName === "IMG",
             );
             break;
           case "FIGURE":
@@ -366,7 +366,7 @@ const findImageContainers = (function () {
               addFigureContent(
                 child,
                 config.imageContainerContent,
-                contentElements
+                contentElements,
               );
             }
             break;
@@ -375,42 +375,41 @@ const findImageContainers = (function () {
             contentElements = [element];
             break;
         }
-        const metaSearchRoot =
-          (searchUpLineage(lineage, (ancestor, index) => {
-            if (index === 0) {
-              return false;
-            }
-            const parent = lineage[index - 1];
-            return (
-              (parent.previousElementSibling || parent.nextElementSibling) &&
-              !findWordsInAttributes(parent).some((word) =>
-                config.imageContainerMetadata.imageWrapperAttributeWordParts.some(
-                  (part) => word.includes(part)
-                )
+        const metaSearchRoot = (searchUpLineage(lineage, (ancestor, index) => {
+          if (index === 0) {
+            return false;
+          }
+          const parent = lineage[index - 1];
+          return (
+            (parent.previousElementSibling || parent.nextElementSibling) &&
+            !findWordsInAttributes(parent).some((word) =>
+              config.imageContainerMetadata.imageWrapperAttributeWordParts.some(
+                (part) => word.includes(part),
               )
-            );
-          }) as Element) || element;
+            )
+          );
+        }) as Element) || element;
         images.push(
           new ImageContainer(
             containerElement ? lineage.concat(containerElement) : [],
             contentElements.map((child) =>
               (lineage as Node[]).concat(
-                buildLineage({ descendant: child, ancestor: element })
+                buildLineage({ descendant: child, ancestor: element }),
               )
             ),
             getVisibleText(
               findDescendantsMatchingQuerySelectors(
                 metaSearchRoot,
-                config.imageContainerMetadata.captionSelectors
-              )
+                config.imageContainerMetadata.captionSelectors,
+              ),
             ),
             getVisibleText(
               findDescendantsMatchingQuerySelectors(
                 metaSearchRoot,
-                config.imageContainerMetadata.creditSelectors
-              )
-            )
-          )
+                config.imageContainerMetadata.creditSelectors,
+              ),
+            ),
+          ),
         );
       }
     }
@@ -421,7 +420,7 @@ const findImageContainers = (function () {
     edge: GraphEdge,
     searchArea: Node[][],
     config: Config,
-    images: ImageContainer[] = []
+    images: ImageContainer[] = [],
   ) {
     if (
       isElement(node) &&
@@ -438,7 +437,7 @@ const findImageContainers = (function () {
             result.edge,
             searchArea,
             config,
-            images
+            images,
           );
         }
       });
@@ -452,7 +451,7 @@ const findPreformattedTextContainers = (function () {
   function createTextNodeLineages(
     element: Element,
     elementLineage: Element[],
-    lineages: Node[][] = []
+    lineages: Node[][] = [],
   ) {
     for (let child of element.childNodes) {
       if (isElement(child)) {
@@ -468,7 +467,7 @@ const findPreformattedTextContainers = (function () {
     lineage: Element[],
     edge: GraphEdge,
     searchArea: Node[][],
-    containers: TextContainer[] = []
+    containers: TextContainer[] = [],
   ) {
     if (isElement(node)) {
       const childLineage = lineage.concat(node);
@@ -479,8 +478,8 @@ const findPreformattedTextContainers = (function () {
             new TextContainer(
               containerLineage,
               createTextNodeLineages(result.node as Element, containerLineage),
-              getWordCount(result.node)
-            )
+              getWordCount(result.node),
+            ),
           );
         } else {
           findPreformattedTextContainers(
@@ -488,7 +487,7 @@ const findPreformattedTextContainers = (function () {
             childLineage,
             result.edge,
             searchArea,
-            containers
+            containers,
           );
         }
       });
@@ -506,7 +505,7 @@ function findAdditionalPrimaryTextContainers(
   potentialContainers: TextContainer[],
   blacklist: Node[],
   config: TextContainerSearchConfig,
-  additionalContainers: TextContainer[] = []
+  additionalContainers: TextContainer[] = [],
 ) {
   if (
     isElement(node) &&
@@ -519,13 +518,13 @@ function findAdditionalPrimaryTextContainers(
       if (
         isElement(result.node) &&
         (matchingContainer = potentialContainers.find(
-          (container) => container.containerElement === result.node
+          (container) => container.containerElement === result.node,
         ))
       ) {
         if (
           !blacklist.some(
             (wrapper) =>
-              wrapper === result.node || result.node.contains(wrapper)
+              wrapper === result.node || result.node.contains(wrapper),
           )
         ) {
           additionalContainers.push(matchingContainer);
@@ -539,7 +538,7 @@ function findAdditionalPrimaryTextContainers(
           potentialContainers,
           blacklist,
           config,
-          additionalContainers
+          additionalContainers,
         );
       }
     });
@@ -552,7 +551,7 @@ function findChildren(
   parent: Node,
   depth: number,
   edge: GraphEdge,
-  searchArea: Node[][]
+  searchArea: Node[][],
 ): ChildNodeSearchResult[] {
   const children = Array.from(parent.childNodes);
   if (edge !== GraphEdge.None && depth < searchArea.length - 1) {
@@ -565,8 +564,7 @@ function findChildren(
       );
     }
     if (edge & GraphEdge.Right) {
-      lastSearchableChildIndex =
-        children.length -
+      lastSearchableChildIndex = children.length -
         1 -
         children
           .reverse()
@@ -583,7 +581,7 @@ function findChildren(
             : true) &&
           (lastSearchableChildIndex != null
             ? index <= lastSearchableChildIndex
-            : true)
+            : true),
       )
       .map((child, index, children) => {
         let childEdge = GraphEdge.None;
@@ -612,11 +610,11 @@ export interface ParserParams {
 }
 
 export default function parseDocumentContent(
-  params: ParserParams
+  params: ParserParams,
 ): ParseResult {
   const publisherConfig = findPublisherConfig(
     configs.publishers,
-    params.url.hostname
+    params.url.hostname,
   );
 
   // Run the preprocessor before everything else if one exists.
@@ -627,7 +625,7 @@ export default function parseDocumentContent(
   let contentSearchRootElement: Element;
   if (publisherConfig && publisherConfig.contentSearchRootElementSelector) {
     contentSearchRootElement = document.querySelector(
-      publisherConfig.contentSearchRootElementSelector
+      publisherConfig.contentSearchRootElementSelector,
     );
   }
   if (!contentSearchRootElement) {
@@ -637,29 +635,32 @@ export default function parseDocumentContent(
   const config = new Config(
     configs.universal,
     publisherConfig,
-    contentSearchRootElement
+    contentSearchRootElement,
   );
 
   const blacklistedTextContainerElements = selectElements(
-    config.textContainerFilter.blacklistSelectors
+    config.textContainerFilter.blacklistSelectors,
   );
 
   let textContainers = findTextContainers(
     contentSearchRootElement,
     [],
-    config
+    config,
   ).filter(
     (container) =>
       container.wordCount > 0 &&
       !blacklistedTextContainerElements.some(
-        (element) => element === container.containerElement
+        (element) => element === container.containerElement,
       ) &&
-      isTextContentValid(container.containerElement, config.textContainerFilter)
+      isTextContentValid(
+        container.containerElement,
+        config.textContainerFilter,
+      ),
   );
   const attributeFilteredTextContainers = textContainers.filter((container) =>
     areContainerAttributesValid(
       container.containerElement,
-      config.textContainerFilter
+      config.textContainerFilter,
     )
   );
   if (attributeFilteredTextContainers.length / textContainers.length > 0.5) {
@@ -669,11 +670,11 @@ export default function parseDocumentContent(
   const textContainerDepthGroups = groupTextContainersByDepth(textContainers);
 
   const depthGroupWithMostWords = textContainerDepthGroups.sort(
-    (a, b) => b.wordCount - a.wordCount
+    (a, b) => b.wordCount - a.wordCount,
   )[0];
 
   const traversalPathSearchResults = findTraversalPaths(
-    depthGroupWithMostWords
+    depthGroupWithMostWords,
   );
 
   const preferredPathHopCountGroups = traversalPathSearchResults.reduce<
@@ -684,7 +685,7 @@ export default function parseDocumentContent(
     }[]
   >((groups, result) => {
     const group = groups.find(
-      (group) => group.preferredPathHopCount === result.getPreferredPath().hops
+      (group) => group.preferredPathHopCount === result.getPreferredPath().hops,
     );
     if (group) {
       group.searchResults.push(result);
@@ -710,22 +711,22 @@ export default function parseDocumentContent(
     >((selectedGroups, group) => {
       if (
         selectedGroups.reduce((sum, group) => sum + group.wordCount, 0) <
-        depthGroupWithMostWords.wordCount *
-          config.wordCountTraversalPathSearchLimitMultiplier
+          depthGroupWithMostWords.wordCount *
+            config.wordCountTraversalPathSearchLimitMultiplier
       ) {
         selectedGroups.push(group);
       }
       return selectedGroups;
     }, []);
 
-  let primaryTextContainerSearchResults =
-    selectedPreferredPathHopCountGroups.reduce<TraversalPathSearchResult[]>(
+  let primaryTextContainerSearchResults = selectedPreferredPathHopCountGroups
+    .reduce<TraversalPathSearchResult[]>(
       (results, group) => results.concat(group.searchResults),
-      []
+      [],
     );
 
   const excludedSearchResults = traversalPathSearchResults.filter(
-    (result) => !primaryTextContainerSearchResults.includes(result)
+    (result) => !primaryTextContainerSearchResults.includes(result),
   );
   if (excludedSearchResults.length) {
     const primaryTextContainerElementMetadata =
@@ -739,7 +740,7 @@ export default function parseDocumentContent(
         >((groups, result) => {
           const group = groups.find(
             (group) =>
-              group.nodeName === result.textContainer.containerElement.nodeName
+              group.nodeName === result.textContainer.containerElement.nodeName,
           );
           if (group) {
             group.searchResults.push(result);
@@ -755,41 +756,42 @@ export default function parseDocumentContent(
         }, [])
         .sort((a, b) => b.wordCount - a.wordCount)[0];
     if (primaryTextContainerElementMetadata.nodeName === "P") {
-      primaryTextContainerSearchResults =
-        primaryTextContainerSearchResults.concat(
+      primaryTextContainerSearchResults = primaryTextContainerSearchResults
+        .concat(
           excludedSearchResults.filter(
             (result) =>
               result.textContainer.containerElement.nodeName ===
-              primaryTextContainerElementMetadata.nodeName
-          )
+                primaryTextContainerElementMetadata.nodeName,
+          ),
         );
     }
   }
 
   const primaryTextRootNode = primaryTextContainerSearchResults[0].textContainer
     .containerLineage[
-    primaryTextContainerSearchResults[0].textContainer.containerLineage.length -
+      primaryTextContainerSearchResults[0].textContainer.containerLineage
+        .length -
       Math.max(
         Math.max(
           ...primaryTextContainerSearchResults.map(
-            (result) => result.getPreferredPath().hops
-          )
+            (result) => result.getPreferredPath().hops,
+          ),
         ) / 2,
-        1
+        1,
       )
-  ] as Element;
+    ] as Element;
 
   const searchArea = zipContentLineages(
-    primaryTextContainerSearchResults.map((result) => result.textContainer)
+    primaryTextContainerSearchResults.map((result) => result.textContainer),
   ).slice(
     buildLineage({
       ancestor: contentSearchRootElement,
       descendant: primaryTextRootNode,
-    }).length - 1
+    }).length - 1,
   );
 
   const blacklistedImageContainerElements = selectElements(
-    config.imageContainerFilter.blacklistSelectors
+    config.imageContainerFilter.blacklistSelectors,
   );
 
   const imageContainers = findImageContainers(
@@ -797,24 +799,24 @@ export default function parseDocumentContent(
     [],
     GraphEdge.Left | GraphEdge.Right,
     searchArea,
-    config
+    config,
   ).filter(
     (container) =>
       !blacklistedImageContainerElements.some(
-        (element) => element === container.containerElement
+        (element) => element === container.containerElement,
       ) &&
       areContainerAttributesValid(
         container.containerElement,
-        config.imageContainerFilter
+        config.imageContainerFilter,
       ) &&
-      isImageContainerMetadataValid(container, config.imageContainerMetadata)
+      isImageContainerMetadataValid(container, config.imageContainerMetadata),
   );
 
   const preformattedTextContainers = findPreformattedTextContainers(
     primaryTextRootNode,
     [],
     GraphEdge.Left | GraphEdge.Right,
-    searchArea
+    searchArea,
   );
 
   const additionalPrimaryTextContainers = findAdditionalPrimaryTextContainers(
@@ -831,21 +833,21 @@ export default function parseDocumentContent(
               config.textContainerSearch.additionalContentMaxDepthDecrease &&
           group.depth <=
             depthGroupWithMostWords.depth +
-              config.textContainerSearch.additionalContentMaxDepthIncrease
+              config.textContainerSearch.additionalContentMaxDepthIncrease,
       )
       .reduce<TextContainer[]>(
         (containers, group) => containers.concat(group.members),
-        []
+        [],
       )
       .concat(
         traversalPathSearchResults
           .filter(
-            (result) => !primaryTextContainerSearchResults.includes(result)
+            (result) => !primaryTextContainerSearchResults.includes(result),
           )
-          .map((result) => result.textContainer)
+          .map((result) => result.textContainer),
       ),
     imageContainers.map((container) => container.containerElement),
-    config.textContainerSearch
+    config.textContainerSearch,
   ).filter((container) =>
     isTextContentValid(container.containerElement, config.textContainerFilter)
   );

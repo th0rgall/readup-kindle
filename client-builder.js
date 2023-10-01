@@ -34,5 +34,5 @@ watch(entryFile, async (eventType, filename) => {
   // - convert arrow functions to function()
   const { code: babelCode } = transformFileSync(esbuildTempFile);
   writeFileSync("./static/client.js", babelCode, "utf-8");
-  unlinkSync(esbuildTempFile);
+  // unlinkSync(esbuildTempFile);
 });
