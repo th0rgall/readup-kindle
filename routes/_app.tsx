@@ -1,30 +1,34 @@
-import { AppProps } from "$fresh/server.ts";
+import { LayoutContext } from "$fresh/server.ts";
+import { tw } from "twind/css";
+import { UAParser } from "npm:ua-parser-js@2.0.0-alpha.3";
 import ClientScripts from "../components/ClientScripts.tsx";
 
-export default function App({ Component }: AppProps) {
+// deno-lint-ignore require-await
+export default async function App(req: Request, ctx: LayoutContext) {
+  const ua = req.headers.get("User-Agent");
+  const { browser, device } = UAParser(ua);
+  const isReadPage = ctx.route.startsWith("/read");
+  // Pass UA down
+  ctx.state.ua = ua;
   return (
-    <html>
+    <html
+      className={tw([
+        {
+          kindle: browser.name === "Kindle" || device.vendor === "Kindle",
+        },
+        // Behavior for the /read container
+        isReadPage && "h-full",
+      ])}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>fresh-backend</title>
-        {/* Not used for now */}
         <link rel="stylesheet" href="/styles.css" />
       </head>
-      <body class="w-full">
-        <Component />
-        {
-          /* For some reason the script is inserted twice in /read/... due to the below, even though this
-         layout is supposedly skipped */
-        }
-        {/* <ClientScripts /> */}
-        {
-          /* <script src="https://unpkg.com/twind/twind.umd.js"></script>
-        <script src="
-https://cdn.jsdelivr.net/npm/css-vars-ponyfill@2.4.8/dist/css-vars-ponyfill.min.js
-">
-        </script> */
-        }
+      <body class={tw(["w-full", isReadPage && "h-full"])}>
+        <ctx.Component />
+        {isReadPage && <ClientScripts />}
       </body>
     </html>
   );

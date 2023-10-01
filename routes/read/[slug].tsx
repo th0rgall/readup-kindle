@@ -6,10 +6,6 @@ import { apply, tw } from "twind";
 import { css } from "twind/css";
 import ClientScripts from "../../components/ClientScripts.tsx";
 
-export const config: RouteConfig = {
-  skipInheritedLayouts: true, // Skip already inherited layouts
-};
-
 const articleStyles = [
   "px-6 py-8",
   css({
@@ -73,23 +69,11 @@ export default async function Read(req: Request, ctx: RouteContext) {
   return (
     // height: 100% helps us get a JS-scrollable inner container
     // somehow the html/body container couldn't be scrolled
-    <html class="h-full">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Readup Article</title>
-        {/* Not used for now */}
-        <link rel="stylesheet" href="/styles.css" />
-      </head>
-      <body class="w-full h-full">
-        <div
-          id="readup-article-container"
-          class={tw(articleStyles)}
-          dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
-        >
-        </div>
-        <ClientScripts />
-      </body>
-    </html>
+    <div
+      id="readup-article-container"
+      class={tw(articleStyles)}
+      dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
+    >
+    </div>
   );
 }

@@ -1,8 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import CommunityReads from "../models/CommunityReads.ts";
-import { css } from "twind/css";
+import { tw } from "twind";
 import Article from "../components/Article.tsx";
-import { grey } from "../lib/style.ts";
 import ListScaffold from "../components/ListScaffold.tsx";
 
 interface Data {
@@ -26,11 +25,12 @@ export const handler: Handlers<Data> = {
 
 export default function Listing({ data }: PageProps<Data>) {
   const aotd = data.communityReads.aotd;
+  const titleClass = "text-xl mt-3 mb-2";
   return (
     <ListScaffold>
-      <h2 class="text-xlm mb-1">AOTD</h2>
+      <h2 class={tw(titleClass)}>AOTD</h2>
       <Article {...aotd}></Article>
-      <h2 class="text-xl mb-1">Contenders</h2>
+      <h2 class={tw(titleClass)}>Contenders</h2>
       {data.communityReads.articles.items.map((a) => (
         <Article {...a} key={a.slug} />
       ))}

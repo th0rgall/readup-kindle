@@ -1,4 +1,5 @@
 import { Handlers } from "$fresh/server.ts";
+import { apply, tw } from "twind";
 
 export const handler: Handlers = {
   async GET(req, ctx) {
@@ -70,30 +71,35 @@ export const handler: Handlers = {
   },
 };
 
+const labelClass = "block text-gray-700 text-sm font-bold mb-2";
+const inputClass =
+  "appearance-none border border-900 rounded w-full py-2 px-3 text-gray-700 mb-4 leading-tight focus:outline-none focus:shadow-outline";
+
 export default function SignIn() {
   return (
-    <div class="w-full max-w-xs">
-      <form method="POSt" class="rounded px-8 pt-6 pb-8 mb-4">
-        <div class="mb-4">
+    <div class="w-full h-full max-w-xs mx-auto my-4">
+      <h1 class="text(xl center) font(bold)">Readup</h1>
+      <form method="POST" class="rounded px-8 pt-6 pb-8 mb-4">
+        <div>
           <label
             htmlFor="email"
-            class="block text-gray-700 text-sm font-bold mb-2"
+            class={tw(labelClass)}
           >
             Email
           </label>
           <input
-            class="appearance-none border border-900 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            class={tw(inputClass)}
             type="email"
             name="email"
             id="email"
             value=""
           />
         </div>
-        <div>
+        <div class="mb-2">
           <label
             htmlFor="password"
             id="password"
-            class="block text-gray-700 text-sm font-bold mb-2"
+            class={tw(labelClass)}
           >
             Password
           </label>
@@ -106,7 +112,14 @@ export default function SignIn() {
             value=""
           />
         </div>
-        <button type="submit">Log in</button>
+        <div class="w-full">
+          <button
+            class="font-bold py-2 px-4 rounded text(white) mx-auto bg-gray-400"
+            type="submit"
+          >
+            Log in
+          </button>
+        </div>
       </form>
     </div>
   );

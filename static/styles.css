@@ -1,4 +1,7 @@
-html {
+/* Blow up the font size of the Kindle browser,
+    because it otherwise renders text super small.
+ */
+html.kindle {
     font-size: 38px;
 }
 
