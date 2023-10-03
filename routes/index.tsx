@@ -1,7 +1,9 @@
 import { Handlers } from "$fresh/server.ts";
 import { apply, tw } from "twind";
+import { READUP_API_BASE } from "../lib/constants.ts";
+import { MWState } from "./_middleware.ts";
 
-export const handler: Handlers = {
+export const handler: Handlers<any, MWState> = {
   async GET(req, ctx) {
     // If we have a cookie
     // TODO: check if the cookie is valid!
@@ -12,7 +14,8 @@ export const handler: Handlers = {
     } catch (e) {
       //
     }
-    if (req.headers.get("Cookie") && !force) {
+    // TODO move this logic to middleware
+    if (ctx.state.sessionCookie && !force) {
       return new Response(
         null,
         {
@@ -30,7 +33,7 @@ export const handler: Handlers = {
     const email = form.get("email")?.toString();
     const password = form.get("password")?.toString();
 
-    const response = await fetch("https://api.readup.org/UserAccounts/SignIn", {
+    const response = await fetch(`${READUP_API_BASE}/UserAccounts/SignIn`, {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -64,6 +67,10 @@ export const handler: Handlers = {
       "Set-Cookie": transformedReturnCookie || "",
       "Location": "/list",
     });
+
+    // Set state (not sure if this is useful though)
+    ctx.state.sessionCookie = transformedReturnCookie || "";
+
     return new Response(null, {
       status: 303, // See Other
       headers,

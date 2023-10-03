@@ -10,3 +10,5 @@ _fresh/
 
 # static/client.js
 node_modules
+client.*.js
+browserify.*.js

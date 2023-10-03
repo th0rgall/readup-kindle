@@ -8,23 +8,23 @@
 //
 // You should have received a copy of the GNU Affero General Public License version 3 along with Foobar. If not, see <https://www.gnu.org/licenses/>.
 
-import ContentContainer from './ContentContainer';
+import ContentContainer from "./ContentContainer.ts";
 
 export default class TextContainer extends ContentContainer {
-	private _wordCount: number;
-	constructor(
-		containerLineage: Node[],
-		contentLineages: Node[][],
-		wordcount: number
-	) {
-		super(containerLineage, contentLineages);
-		this._wordCount = wordcount;
-	}
-	public mergeContent(container: TextContainer) {
-		this._contentLineages.push(...container._contentLineages);
-		this._wordCount += container.wordCount;
-	}
-	public get wordCount() {
-		return this._wordCount;
-	}
+  private _wordCount: number;
+  constructor(
+    containerLineage: Node[],
+    contentLineages: Node[][],
+    wordcount: number,
+  ) {
+    super(containerLineage, contentLineages);
+    this._wordCount = wordcount;
+  }
+  public mergeContent(container: TextContainer) {
+    this._contentLineages.push(...container._contentLineages);
+    this._wordCount += container.wordCount;
+  }
+  public get wordCount() {
+    return this._wordCount;
+  }
 }

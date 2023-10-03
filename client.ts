@@ -13,13 +13,14 @@
 // import "core-js/actual/string/ends-with";
 
 import parseDocumentContent from "./client/contentParsing/parseDocumentContent.ts";
-import pruneDocument from "./client/contentParsing/pruneDocument.ts";
+// import pruneDocument from "./client/contentParsing/pruneDocument.ts";
 import Page from "./client/reading/Page.ts";
 import Reader from "./client/reading/Reader.ts";
+// import createPageParseResult from "./client/reading/createPageParseResult.ts";
 import parseDocumentMetadata from "./client/reading/parseDocumentMetadata.ts";
-import styleArticleDocument, {
-  createByline,
-} from "./client/reading/styleArticleDocument.ts";
+// import styleArticleDocument, {
+//   createByline,
+// } from "./client/reading/styleArticleDocument.ts";
 
 const viewportHeight = $(window).height();
 const width = document.body.clientWidth;
@@ -61,11 +62,25 @@ $(document).ready(function () {
   const docContainer = document.getElementById(containerId);
   if (docContainer) {
     // we polyfilled this...
+    const userArticle = window.userArticleResult;
     docContainer.prepend();
     const progress = $("<div><div>").addClass("readup-progress");
     const reader = new Reader((event) => {
       progress.html(event.percentComplete.toFixed(0));
-      // eventPageApi
+      const data = JSON.stringify({
+        readState: event.readStateArray,
+        userPageId: userArticle &&
+          userArticle.userPage.id,
+      });
+      $.ajax({
+        url: "/api/Extension/CommitReadState",
+        method: "POST",
+        dataType: "json",
+        contentType: "application/json; charset=utf-8",
+        data,
+      });
+      //.done((d) => console.log("OK", d)).fail((e) => console.error("No", e));
+      // eventPageApi;
       //   .commitReadState(
       //     {
       //       readState: event.readStateArray,
@@ -92,26 +107,39 @@ $(document).ready(function () {
       url: window.location,
     });
 
-    const parseResult = pruneDocument(contentParseResult);
-    const contentRoot = parseResult.contentRoot;
-    const scrollRoot = parseResult.scrollRoot;
+    // without the prune step, no separate styles get added
+    // const parseResult = pruneDocument(contentParseResult);
+    // const contentRoot = parseResult.contentRoot;
+    // const scrollRoot = parseResult.scrollRoot;
 
     // PROXY EXT NOTE: userScrollContainer was true in web. Needed?
-    styleArticleDocument({
-      header: {
-        // title: metadataParseResult.metadata.article.title,
-        title: "Test!",
-        //
-        // byline: createByline(metadataParseResult.metadata.article.authors),
-        byline: createByline([{ name: "Author 1" }]),
-      },
-      transitionElement: document.documentElement,
-      // completeTransition works on the <html> element,
-      // which results in a longer flash in dark mode (0 opacity = white)
-      // TODO: target the body in this styleArticleDocument, instead of in this file?
-      // completeTransition: true
-    });
+    // styleArticleDocument({
+    //   header: {
+    //     // title: metadataParseResult.metadata.article.title,
+    //     title: "Test!",
+    //     //
+    //     // byline: createByline(metadataParseResult.metadata.article.authors),
+    //     byline: createByline([{ name: "Author 1" }]),
+    //   },
+    //   transitionElement: document.documentElement,
+    //   // completeTransition works on the <html> element,
+    //   // which results in a longer flash in dark mode (0 opacity = white)
+    //   // TODO: target the body in this styleArticleDocument, instead of in this file?
+    //   // completeTransition: true
+    // });
 
+    // const pageInfoResult = createPageParseResult(
+    //   metadataParseResult,
+    //   contentParseResult,
+    // );
+    // $.ajax({
+    //   url: "/api/Extension/GetUserArticle",
+    //   method: "POST",
+    //   dataType: "json",
+    //   contentType: "application/json; charset=utf-8",
+    //   data: JSON.stringify(pageInfoResult),
+    // }).done(function (data) {
+    //   console.log("data ", data);
     const page = new Page(contentParseResult.primaryTextContainers);
     // Readup has removed our styles 🤷‍♂️ re-add
     $(document.createElement("link")).attr({
@@ -120,8 +148,12 @@ $(document).ready(function () {
       rel: "stylesheet",
     }).appendTo("head");
     $("body").append(progress);
-    // page.setReadState(result.userPage.readState);
+    if (userArticle) {
+      console.log("Setting page readState");
+      page.setReadState(userArticle.userPage.readState);
+    }
     reader.loadPage(page);
+    // });
   }
 });
 

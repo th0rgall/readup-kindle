@@ -3,6 +3,7 @@ import UserArticle from "../models/UserArticle.ts";
 import { css } from "twind/css";
 import { tw } from "twind";
 import { grey } from "../lib/style.ts";
+import Authors from "./Authors.tsx";
 
 export default function Article(
   {
@@ -43,7 +44,7 @@ export default function Article(
         </h2>
         <div class="text-base">
           {source && `${source} · `}
-          {articleAuthors.map((a) => a.name).join(", ")}
+          {Authors(articleAuthors)}
         </div>
         <p class="text-sm">{description?.substring(0, 300)}</p>
       </a>
