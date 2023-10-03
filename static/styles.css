@@ -5,12 +5,20 @@ html.kindle {
     font-size: 38px;
 }
 
- #readup-article-container {
+#readup-article-container {
     overflow-y: scroll;
     height: 100%;
+    font-size: 44px;
+    font-family: 'Bookerly', serif;
 }
+
 #readup-article-container p {
     margin-bottom: 1rem;
+}
+
+#readup-article-container h1, h2, h3 {
+    font-size: 48px;
+    font-weight: bold;
 }
 
 .readup-progress {

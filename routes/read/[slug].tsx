@@ -136,7 +136,7 @@ export default async function Read(
         }}
       >
       </script>
-      <div id="readup-article-container">
+      <div id="readup-article-container" class={tw(articleStyles)}>
         <>
           <h1>
             {userArticleResult?.userArticle.title ||
@@ -150,7 +150,6 @@ export default async function Read(
           </p>
         </>
         <div
-          class={tw(articleStyles)}
           dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
         />
       </div>

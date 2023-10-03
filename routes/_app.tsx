@@ -15,6 +15,7 @@ export default async function App(req: Request, ctx: LayoutContext) {
       className={tw([
         {
           kindle: browser.name === "Kindle" || device.vendor === "Kindle",
+          reader: isReadPage,
         },
         // Behavior for the /read container
         isReadPage && "h-full",
