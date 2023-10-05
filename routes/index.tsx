@@ -2,7 +2,9 @@ import { Handlers, PageProps } from "$fresh/server.ts";
 import CommunityReads from "../models/CommunityReads.ts";
 import { tw } from "twind";
 import Article from "../components/Article.tsx";
-import ListPageScaffold from "../components/ListPageScaffold.tsx";
+import ListPageScaffold, {
+  activeNavClass,
+} from "../components/ListPageScaffold.tsx";
 import { READUP_API_BASE } from "../lib/constants.ts";
 
 interface Data {
@@ -24,16 +26,14 @@ export const handler: Handlers<Data> = {
   },
 };
 
-export default function Listing({ data }: PageProps<Data>) {
+export default function Listing({ data, ...rest }: PageProps<Data>) {
   const aotd = data.communityReads.aotd;
-  const titleClass = "text-xl mt-3 mb-2";
   return (
-    <ListPageScaffold>
-      <h2 class={tw(titleClass)}>AOTD</h2>
+    <ListPageScaffold ctx={rest}>
       <Article {...aotd}></Article>
-      <h2 class={tw(titleClass)}>Contenders</h2>
-      {data.communityReads.articles.items.map((a) => (
-        <Article {...a} key={a.slug} />
+      <h2 class={tw(activeNavClass, "mt-5 mb-2")}>Contenders</h2>
+      {data.communityReads.articles.items.map((a, i) => (
+        <Article {...a} showDescription={i <= 3} key={a.slug} />
       ))}
     </ListPageScaffold>
   );

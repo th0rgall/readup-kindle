@@ -6,7 +6,7 @@ export async function handler(
   req: Request,
   ctx: MiddlewareHandlerContext<MWState>,
 ) {
-  console.log(`Forwarding ${req.url}`);
+  // console.log(`Forwarding ${req.url}`);
   const woProtocol = req.url.replace(/^(https?:)?\/\//, "");
   const fullPath = woProtocol.slice(
     woProtocol.indexOf("/"),

@@ -11,23 +11,42 @@ import ArticleLookupResult from "../../models/ArticleLookupResult.ts";
 import Authors from "../../components/Authors.tsx";
 import { Head } from "$fresh/runtime.ts";
 import { TITLE } from "../../lib/constants.ts";
+import Script from "../../components/Script.tsx";
 
-const articleStyles = css([
-  apply`px-6 py-8`,
-  {
-    fontFamily: "'Bookerly', serif",
-    // overflow will only happen when acenstral containers are contained to the screen height
-    "@apply": "h-full text-xl overflow-y-scroll max-w-3xl mx-auto",
-    // not sure where this & is documented, but it works! It's equivalent to a css space
-    // :global actually applies globally (unscoped, wherever defined)
-    "&": {
-      h1: apply`text-2xl font(sans bold)`,
-      p: {
-        "@apply": "mb-4",
+const articleStyles = (isKindle: boolean) =>
+  css([
+    // apply`px-6 py-8`,
+    {
+      // kindle scrollbar hack
+      ...(isKindle
+        ? {
+          height: "1289px",
+          overflow: "scroll",
+          border: "none",
+        }
+        : {
+          height: "100%",
+        }),
+      fontFamily: "'Bookerly', serif",
+      // "@apply": "pt-2",
+      // overflow will only happen when acenstral containers are contained to the screen height
+      // not sure where this & is documented, but it works! It's equivalent to a css space
+      // :global actually applies globally (unscoped, wherever defined)
+      "&": {
+        h1: apply`text-2xl font(sans bold)`,
+        p: {
+          "@apply": "mb-4",
+        },
       },
     },
-  },
-]);
+  ]);
+
+const contentStyles = (isKindle: boolean) =>
+  css({
+    "@apply": `text-xl overflow-y-scroll mx-auto border-none pl-6 pr-1 py-8 ${
+      !isKindle ? "max-w-3xl" : ""
+    }`,
+  });
 
 const removeElementsWithQuerySelector = (doc: HTMLDocument, selector: string) =>
   Array.from(doc.querySelectorAll(selector)).forEach((e) => e._remove());
@@ -49,6 +68,7 @@ export default async function Read(
   req: Request,
   ctx: RouteContext<unknown, MWState>,
 ) {
+  const isKindle = ctx.state.isKindle;
   // const randomIndex = Math.floor(Math.random() * JOKES.length);
   // const body = JOKES[randomIndex];
   // return new Response(body);
@@ -168,20 +188,25 @@ export default async function Read(
       <Head>
         <title>{TITLE} | {articleTitle}</title>
       </Head>
-      <div class="readup-progress"></div>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `window.userArticleResult = ${
-            JSON.stringify(userArticleResult)
-          };`,
-        }}
-      >
-      </script>
+      <div class="readup-reader-controls" style={{ display: "none" }}>
+        <div class="readup-home">
+          <a href="/">← Home</a>
+        </div>
+        <div class="readup-progress">...</div>
+      </div>
+      <Script
+        code={`window.userArticleResult = ${
+          JSON.stringify(userArticleResult)
+        };`}
+      />
       <div
         id="readup-article-container"
-        class={articleStyles}
+        class={articleStyles(isKindle)}
       >
-        <>
+        <div
+          id="readup-article-content"
+          class={contentStyles(isKindle)}
+        >
           <h1>
             {articleTitle}
           </h1>
@@ -191,10 +216,11 @@ export default async function Read(
                 metadataParseResult.metadata.article.authors || [],
             )}
           </p>
-        </>
-        <div
-          dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
-        />
+          <div
+            dangerouslySetInnerHTML={{ __html: contentRoot.innerHTML }}
+          >
+          </div>
+        </div>
       </div>
     </>
   );

@@ -15,8 +15,7 @@ export default async function MyReads(req: Request, ctx: RouteContext) {
   ).then((r) => r.json()) as PageResult<UserArticle>;
 
   return (
-    <ListPageScaffold>
-      <h2 class="text-xl mb-1">My Reads</h2>
+    <ListPageScaffold ctx={ctx}>
       {myReads.items.map((a) => <Article {...a} key={a.slug} />)}
     </ListPageScaffold>
   );

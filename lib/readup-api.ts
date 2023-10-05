@@ -12,7 +12,7 @@ export const rFetch = (
     | RouteContext<unknown, MWState>,
 ) => {
   const fullPath = READUP_API_BASE + route;
-  console.log(`Requesting ${fullPath}`);
+  // console.log(`Requesting ${fullPath}`);
   return fetch(fullPath, {
     ...init,
     headers: {

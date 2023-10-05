@@ -5134,25 +5134,41 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var viewportHeight = $(window).height();
   var width = document.body.clientWidth;
   $(function () {
-    var containerId = "readup-article-container";
-    $("#".concat(containerId)).on("click", function (event) {
-      var x = event.pageX;
-      console.log("".concat(event.pageX, ", ").concat(event.pageY));
-      var containerNode = $(this).get(0);
-      var currentScroll = $(this).scrollTop();
-      if (x < width / 2) {
-        console.log("previous");
-        containerNode.scrollTop = currentScroll - viewportHeight * 0.95;
-      } else {
-        console.log("next");
-        containerNode.scrollTop = currentScroll + viewportHeight * 0.95;
-      }
+    $("div[data-href]").on("click", function () {
+      window.open($(this).attr("data-href"), "_self");
     });
-    var docContainer = document.getElementById(containerId);
-    if (docContainer) {
+    var containerId = "readup-article-container";
+    var articleContainer = document.getElementById(containerId);
+    if (articleContainer) {
+      var progress = $(".readup-progress");
+      var controls = $(".readup-reader-controls");
+      controls.on("click", function () {
+        if ($(this).is(":visible")) {
+          $(this).toggle();
+        }
+      });
+      $("#".concat(containerId)).on("click", function (event) {
+        var x = event.pageX;
+        var y = event.pageY;
+        console.log("".concat(event.pageX, ", ").concat(event.pageY));
+        var containerNode = $(this).get(0);
+        var currentScroll = $(this).scrollTop();
+        var isTopClick = y < viewportHeight / 6;
+        if (!isTopClick && controls.is(":visible")) {
+          controls.hide();
+        } else if (!isTopClick) {
+          if (x < width / 2) {
+            console.log("previous");
+            containerNode.scrollTop = currentScroll - viewportHeight * 0.95;
+          } else {
+            console.log("next");
+            containerNode.scrollTop = currentScroll + viewportHeight * 0.95;
+          }
+        } else {
+          controls.toggle();
+        }
+      });
       var userArticle = window.userArticleResult;
-      docContainer.prepend();
-      var progress = $("<div><div>").addClass("readup-progress");
       var reader = new Reader(function (event) {
         progress.html(event.percentComplete.toFixed(0));
         var data = JSON.stringify({
@@ -5173,19 +5189,13 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         url: window.location
       });
       var page = new Page(contentParseResult.primaryTextContainers);
-      $(document.createElement("link")).attr({
-        href: "/styles.css",
-        type: "text/css",
-        rel: "stylesheet"
-      }).appendTo("head");
-      $("body").append(progress);
       if (userArticle) {
         console.log("Setting page readState");
         page.setReadState(userArticle.userPage.readState);
       }
       reader.loadPage(page);
       if (page.getBookmarkScrollTop() > window.innerHeight) {
-        continueReadingFrom(page, docContainer, function () {
+        continueReadingFrom(page, articleContainer, function () {
           console.log("Resuming where left off");
         });
       }

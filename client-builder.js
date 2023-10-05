@@ -12,6 +12,7 @@ const entryFile = "./client.ts";
 const esbuildTempFile = "./static/client.esbuild.js";
 
 watch(entryFile, async (eventType, filename) => {
+  console.log("Rebuilding the client...");
   if (!(filename && eventType === "change")) {
     return;
   }

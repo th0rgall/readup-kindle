@@ -9,9 +9,36 @@ html.kindle.reader {
     font-size: 34px;
 }
 
+.readup-reader-controls {
+    position: absolute;
+    top: 0;
+    height: 3.8rem;
+    background-color: white;
+    border-bottom: 1px solid #aaa;
+    box-shadow: 0 2px 16px #a2a2a2;
+    font-size: 1.2rem;
+    width: 100%;
+}
+
+.kindle .readup-reader-controls {
+    right: -36px;
+    /* width: 104%; */
+    width: 103%;
+}
+
 .readup-progress {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    background-color: #eee;
+    position: absolute;
+    top: 0.75rem;
+    right: 2rem;
+    border: 2px solid #aaa;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    line-height: 1;
+}
+
+.readup-home {
+    top: 1.25rem;
+    position: absolute;
+    left: 1.4rem;
+    line-height: 1;
 }

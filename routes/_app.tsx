@@ -5,6 +5,7 @@ import ClientScripts from "../components/ClientScripts.tsx";
 import { createContext } from "preact";
 import { MWState } from "./_middleware.ts";
 import { TITLE } from "../lib/constants.ts";
+import Script from "../components/Script.tsx";
 
 export const State = createContext<
   MWState
@@ -24,9 +25,11 @@ export default async function App(
   const { browser, device } = UAParser(ua);
   const isReadPage = ctx.route.startsWith("/read");
   const isLoginPage = ctx.route.startsWith("/login");
+  const isIndexPage = ctx.route === "/";
   const isKindle = browser.name === "Kindle" || device.vendor === "Kindle";
-
-  const isFullscreen = (isReadPage && isKindle) || isLoginPage;
+  // Kindle reading in pagination mode
+  const isKindlePageReader = isReadPage && isKindle;
+  const isGeneralFullscreen = isKindlePageReader || isLoginPage;
 
   // Ensure state can be accessed without props
   // Pass UA down
@@ -47,7 +50,9 @@ export default async function App(
           // only on kindle: we want the enire container to be 100% height
           // because we need an non-html non-boyd scroll container to control its
           // for pagination)
-          isFullscreen && "h-full",
+          isGeneralFullscreen && "h-full",
+          // Kindle hide scroll bar hack
+          isKindlePageReader && "overflow-hidden",
         ]}
       >
         <head>
@@ -59,9 +64,21 @@ export default async function App(
           <title>{TITLE}</title>
           <link rel="stylesheet" href="/styles.css" />
         </head>
-        <body class={tw(["w-full", isFullscreen && "h-full"])}>
+        <body
+          // Kindle hide scroll bar hack
+          style={isKindlePageReader
+            ? { height: "1260px", width: "104%", overflow: "hidden" }
+            : {}}
+          class={!isKindlePageReader
+            ? tw(["w-full", isLoginPage && "h-full"])
+            : undefined}
+        >
           <ctx.Component />
+          <script src="//code.jquery.com/jquery-3.7.1.min.js"></script>
           {isReadPage && <ClientScripts />}
+          {isIndexPage && (
+            <Script code={await Deno.readTextFile("./client/index.js")} />
+          )}
         </body>
       </html>
     </State.Provider>

@@ -3,7 +3,8 @@
   "deno.enablePaths": [
     "./components",
     "./lib",
-    "./models"
+    "./models",
+    "./routes"
   ],
   "deno.lint": true,
   "editor.defaultFormatter": "denoland.vscode-deno",
