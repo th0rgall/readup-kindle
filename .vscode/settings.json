@@ -1,5 +1,10 @@
 {
   "deno.enable": true,
+  "deno.enablePaths": [
+    "./components",
+    "./lib",
+    "./models"
+  ],
   "deno.lint": true,
   "editor.defaultFormatter": "denoland.vscode-deno",
   "[typescriptreact]": {
