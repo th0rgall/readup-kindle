@@ -20,4 +20,5 @@
     "static/client.js": true
   },
   "explorer.excludeGitIgnore": false,
+  "deno.path": "/usr/local/bin/deno",
 }

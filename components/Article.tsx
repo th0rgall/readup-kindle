@@ -23,7 +23,7 @@ export default function Article(
         Scout: {firstPoster}
       </div>
       <a
-        class={`block relative mb-2 p-2 border(2 black) rounded no-underline ${
+        class={`block relative mb-2 p-3 border(1 gray-500) rounded no-underline ${
           css({ textDecoration: "none !important" })
         }`}
         href={`/read/${slug}?url=${encodeURIComponent(url)}`}
@@ -46,7 +46,7 @@ export default function Article(
           {source && `${source} · `}
           {Authors(articleAuthors)}
         </div>
-        <p class="text-sm">{description?.substring(0, 300)}</p>
+        <p class="text(sm gray-700)">{description?.substring(0, 300)}</p>
       </a>
     </article>
   );

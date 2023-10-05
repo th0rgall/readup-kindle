@@ -1,7 +1,19 @@
-import { Handlers } from "$fresh/server.ts";
+import { Handlers, PageProps } from "$fresh/server.ts";
 import { apply, tw } from "twind";
-import { READUP_API_BASE } from "../lib/constants.ts";
+import { READUP_API_BASE, TITLE } from "../lib/constants.ts";
 import { MWState } from "./_middleware.ts";
+import { inputClass, labelClass } from "../lib/style.ts";
+
+const redirect = () =>
+  new Response(
+    null,
+    {
+      status: 303,
+      headers: {
+        Location: "/",
+      },
+    },
+  );
 
 export const handler: Handlers<any, MWState> = {
   async GET(req, ctx) {
@@ -14,17 +26,10 @@ export const handler: Handlers<any, MWState> = {
     } catch (e) {
       //
     }
+
     // TODO move this logic to middleware
     if (ctx.state.sessionCookie && !force) {
-      return new Response(
-        null,
-        {
-          status: 303,
-          headers: {
-            Location: "/list",
-          },
-        },
-      );
+      return redirect();
     }
     return await ctx.render();
   },
@@ -59,13 +64,11 @@ export const handler: Handlers<any, MWState> = {
       // the below one wasn't supported by midori, mabye the above too
       .replace("httponly", "");
 
-    // Add email to list.
-
-    // Redirect user to thank you page.
+    // Redirect user
     console.log("");
     const headers = new Headers({
       "Set-Cookie": transformedReturnCookie || "",
-      "Location": "/list",
+      "Location": "/",
     });
 
     // Set state (not sure if this is useful though)
@@ -78,14 +81,15 @@ export const handler: Handlers<any, MWState> = {
   },
 };
 
-const labelClass = "block text-gray-700 text-sm font-bold mb-2";
-const inputClass =
-  "appearance-none border border-900 rounded w-full py-2 px-3 text-gray-700 mb-4 leading-tight focus:outline-none focus:shadow-outline";
-
-export default function SignIn() {
+export default function SignIn(
+  { state: { isKindle } }: PageProps<any, MWState>,
+) {
   return (
-    <div class="w-full h-full max-w-xs mx-auto my-4">
-      <h1 class="text(xl center) font(bold)">Readup</h1>
+    <div class="max-w-xs mx-auto mt-10 mb-4">
+      <h1 class="text(xl center) font(bold) mb-3">{TITLE}</h1>
+      <p class="text-center text-gray-700">
+        Log in with your Readup account.
+      </p>
       <form method="POST" class="rounded px-8 pt-6 pb-8 mb-4">
         <div>
           <label
@@ -105,6 +109,7 @@ export default function SignIn() {
         <div class="mb-2">
           <label
             htmlFor="password"
+            // TODO: Kindle doesn't support the password type (verify)
             id="password"
             class={tw(labelClass)}
           >
@@ -113,7 +118,7 @@ export default function SignIn() {
           {/*  */}
           <input
             class="appearance-none border border-900 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-            type=""
+            type={isKindle ? "text" : "password"}
             id="password"
             name="password"
             value=""

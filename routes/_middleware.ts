@@ -3,6 +3,10 @@ import { MiddlewareHandlerContext } from "$fresh/server.ts";
 export interface MWState {
   hasAuth: boolean;
   sessionCookie: string;
+  // will be added later
+  // should be typed better; like RootState and AppState
+  ua: string | null;
+  isKindle: boolean;
 }
 
 export async function handler(

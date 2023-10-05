@@ -1,34 +1,33 @@
-import { RouteConfig, RouteContext } from "$fresh/server.ts";
+import { RouteContext } from "$fresh/server.ts";
 import { DOMParser, HTMLDocument } from "deno_dom";
 import parseDocumentContent from "../../lib/contentParsing/parseDocumentContent.ts";
 import pruneDocument from "../../lib/contentParsing/pruneDocument.ts";
-import { apply, tw } from "twind";
-import { css } from "twind/css";
-import ClientScripts from "../../components/ClientScripts.tsx";
-import ContentElement from "../../lib/reading/ContentElement.ts";
-import { isBlockElement } from "../../lib/contentParsing/utils.ts";
-import { findContentElements } from "../../lib/reading/Page.ts";
+import { apply, css } from "twind/css";
 import parseDocumentMetadata from "../../lib/reading/parseDocumentMetadata.ts";
 import createPageParseResult from "../../lib/reading/createPageParseResult.ts";
 import { rFetch } from "../../lib/readup-api.ts";
 import { MWState } from "../_middleware.ts";
 import ArticleLookupResult from "../../models/ArticleLookupResult.ts";
 import Authors from "../../components/Authors.tsx";
+import { Head } from "$fresh/runtime.ts";
+import { TITLE } from "../../lib/constants.ts";
 
-const articleStyles = [
-  "px-6 py-8",
-  css({
-    "height": "100%",
-    "overflow-y": "scroll",
-    "overflow": "scroll",
-    ":global": {
-      p: apply`mb-4`,
-      // p: {
-      //   marginBottom: "2rem",
-      // },
+const articleStyles = css([
+  apply`px-6 py-8`,
+  {
+    fontFamily: "'Bookerly', serif",
+    // overflow will only happen when acenstral containers are contained to the screen height
+    "@apply": "h-full text-xl overflow-y-scroll max-w-3xl mx-auto",
+    // not sure where this & is documented, but it works! It's equivalent to a css space
+    // :global actually applies globally (unscoped, wherever defined)
+    "&": {
+      h1: apply`text-2xl font(sans bold)`,
+      p: {
+        "@apply": "mb-4",
+      },
     },
-  }),
-];
+  },
+]);
 
 const removeElementsWithQuerySelector = (doc: HTMLDocument, selector: string) =>
   Array.from(doc.querySelectorAll(selector)).forEach((e) => e._remove());
@@ -55,8 +54,32 @@ export default async function Read(
   // return new Response(body);
   const url = new URL(req.url);
   const pageUrl = url.searchParams.get("url") || "";
-  const page = await fetch(pageUrl).then((r) => r.text());
-  const document = new DOMParser().parseFromString(page, "text/html");
+
+  const loadError = () =>
+    new Response(
+      "The article couldn't be loaded! It might be that this publisher blocks proxies.",
+      { status: 500 },
+    );
+
+  let page: string;
+  try {
+    const resp = await fetch(pageUrl);
+    if (!(resp.status >= 200 && resp.status <= 399)) {
+      return loadError();
+    }
+    page = await resp.text();
+  } catch (e) {
+    return loadError();
+  }
+  let document: HTMLDocument | null;
+
+  try {
+    document = new DOMParser().parseFromString(page, "text/html");
+  } catch (e) {
+    return new Response(`The article couldn't be parsed by Deno. ${e}`, {
+      status: 500,
+    });
+  }
 
   // Clean doc
   // Remove scripts
@@ -75,25 +98,35 @@ export default async function Read(
     // url: window.location,
   });
 
-  const contentParseResult = parseDocumentContent({
-    // url: documentLocation,
-    url: new URL(pageUrl),
-  });
+  let contentRoot: HTMLDivElement;
+  let pageInfoResult: ReturnType<typeof createPageParseResult>;
 
-  const parseResult = pruneDocument(contentParseResult);
-  const contentRoot = parseResult.contentRoot;
+  try {
+    const contentParseResult = parseDocumentContent({
+      // url: documentLocation,
+      url: new URL(pageUrl),
+    });
 
-  const pageInfoResult = createPageParseResult(
-    metadataParseResult,
-    contentParseResult,
-  );
+    const parseResult = pruneDocument(contentParseResult);
+    contentRoot = parseResult.contentRoot;
+
+    pageInfoResult = createPageParseResult(
+      metadataParseResult,
+      contentParseResult,
+    );
+  } catch (e) {
+    // return `Readup.ink's parser stumbled upon a bug: ${e}`;
+    return new Response(`Readup.ink's parser stumbled upon a bug: ${e}`, {
+      status: 500,
+    });
+  }
 
   let userArticleResult: ArticleLookupResult | null = null;
   if (ctx.state.hasAuth) {
     // why requests this here, and not on the client?
     // because it's less easy to server the <head> that we just fetched to the client
     // without getting into dirty tricks & <iframe> s (not sure if those are supported)
-    userArticleResult = await rFetch(
+    const resp = await rFetch(
       "/Extension/GetUserArticle",
       {
         method: "POST",
@@ -103,7 +136,9 @@ export default async function Read(
         body: JSON.stringify(pageInfoResult),
       },
       ctx,
-    ).then((r) => r.json());
+    );
+
+    userArticleResult = await resp.json();
     // userArticleResult = await r.text();
   }
   // console.log(userArticleResult);
@@ -123,10 +158,16 @@ export default async function Read(
   //   e.element.classList.add("rce");
   // }
 
+  const articleTitle = userArticleResult?.userArticle.title ||
+    metadataParseResult.metadata.article.title;
+
   return (
     // height: 100% helps us get a JS-scrollable inner container
     // somehow the html/body container couldn't be scrolled
     <>
+      <Head>
+        <title>{TITLE} | {articleTitle}</title>
+      </Head>
       <div class="readup-progress"></div>
       <script
         dangerouslySetInnerHTML={{
@@ -136,13 +177,15 @@ export default async function Read(
         }}
       >
       </script>
-      <div id="readup-article-container" class={tw(articleStyles)}>
+      <div
+        id="readup-article-container"
+        class={articleStyles}
+      >
         <>
           <h1>
-            {userArticleResult?.userArticle.title ||
-              metadataParseResult.metadata.article.title}
+            {articleTitle}
           </h1>
-          <p>
+          <p class="font-sans">
             {Authors(
               userArticleResult?.userArticle.articleAuthors ||
                 metadataParseResult.metadata.article.authors || [],

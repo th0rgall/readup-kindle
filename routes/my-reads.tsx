@@ -1,10 +1,7 @@
-import { Handlers, PageProps } from "$fresh/server.ts";
-import CommunityReads from "../models/CommunityReads.ts";
-import { css } from "twind/css";
 import Article from "../components/Article.tsx";
 import UserArticle from "../models/UserArticle.ts";
 import PageResult from "../models/PageResult.ts";
-import ListScaffold from "../components/ListScaffold.tsx";
+import ListPageScaffold from "../components/ListPageScaffold.tsx";
 
 export default async function MyReads(req: Request, ctx: RouteContext) {
   // forward headers
@@ -18,9 +15,9 @@ export default async function MyReads(req: Request, ctx: RouteContext) {
   ).then((r) => r.json()) as PageResult<UserArticle>;
 
   return (
-    <ListScaffold>
+    <ListPageScaffold>
       <h2 class="text-xl mb-1">My Reads</h2>
       {myReads.items.map((a) => <Article {...a} key={a.slug} />)}
-    </ListScaffold>
+    </ListPageScaffold>
   );
 }
