@@ -37,7 +37,10 @@ import { findPublisherConfig } from "./configuration/PublisherConfig.ts";
 import ElementSelector from "./configuration/ElementSelector.ts";
 import ContainerFilterConfig from "./configuration/ContainerFilterConfig.ts";
 import TextContainerFilterConfig from "./configuration/TextContainerFilterConfig.ts";
-import { Node } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import {
+  Element,
+  Node,
+} from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 // regular expressions
 const singleSentenceRegex = /^[^.!?]+[.!?'"]*$/;
@@ -304,7 +307,7 @@ function findTraversalPaths(group: TextContainerDepthGroup) {
 const findImageContainers = (function () {
   function getVisibleText(elements: Element[]) {
     for (const element of elements) {
-      if (element instanceof HTMLElement) {
+      if (element instanceof Element) {
         const text = element.innerText.trim();
         if (text) {
           return text;
