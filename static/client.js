@@ -24,6 +24,11 @@ require("element-remove-polyfill");
 // require("element-dataset");
 // require("conglomerate-element-dataset");
 
+// Readup continue where you left off uses "scrollTo"
+// inner scroll containers support .scrollTop =
+// but the less OG code to change, the better.
+require("element-scroll-polyfill");
+
 // https://vanillajstoolkit.com/polyfills/append/
 /**
  * ChildNode.append() polyfill
@@ -93,7 +98,7 @@ require("element-remove-polyfill");
   });
 })([Element.prototype, Document.prototype, DocumentFragment.prototype]);
 
-},{"classlist-polyfill":2,"core-js/actual/array/find":4,"core-js/actual/array/find-index":3,"core-js/actual/array/from":5,"core-js/actual/array/includes":6,"core-js/actual/math/sign":7,"core-js/actual/object/get-own-property-descriptor":8,"core-js/actual/object/get-own-property-descriptors":9,"core-js/actual/string/ends-with":10,"core-js/actual/string/includes":11,"core-js/actual/string/starts-with":12,"element-matches-polyfill":151,"element-remove-polyfill":152}],2:[function(require,module,exports){
+},{"classlist-polyfill":2,"core-js/actual/array/find":4,"core-js/actual/array/find-index":3,"core-js/actual/array/from":5,"core-js/actual/array/includes":6,"core-js/actual/math/sign":7,"core-js/actual/object/get-own-property-descriptor":8,"core-js/actual/object/get-own-property-descriptors":9,"core-js/actual/string/ends-with":10,"core-js/actual/string/includes":11,"core-js/actual/string/starts-with":12,"element-matches-polyfill":151,"element-remove-polyfill":152,"element-scroll-polyfill":153}],2:[function(require,module,exports){
 /*
  * classList.js: Cross-browser full element.classList implementation.
  * 1.1.20170427
@@ -2965,10 +2970,131 @@ if (!Element.prototype.matches) {
   });
 })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
 
+},{}],153:[function(require,module,exports){
+(function() {
+    var normalizeNonFiniteValue = function (value) {
+        value = +value;
+        return (isNaN(value) || value == Infinity || value == -Infinity) ? 0 : value;
+    }
+    
+    var isBodyPotentiallyScrollable = function (body) {
+        body = body ? body : document.getElementsByTagName("BODY")[0];
+    
+        var bodyComputedStyle = window.getComputedStyle(body);
+        var parentComputedStyle =  window.getComputedStyle(body.parent);
+        var bodyComputedOverflowX = bodyComputedStyle.overflowX;
+        var bodyComputedOverflowY = bodyComputedStyle.overflowY;
+        var parentComputedOverflowX = parentComputedStyle.overflowX;
+        var parentComputedOverflowY = parentComputedStyle.overflowY;
+    
+        return (
+            (
+                bodyComputedStyle.display == "table-column" || 
+                bodyComputedStyle.display == "table-column-group"
+            ) && (
+                parentComputedOverflowX != "visible" && 
+                parentComputedOverflowX != "clip" && 
+                parentComputedOverflowY != "visible" && 
+                parentComputedOverflowY != "clip"
+            ) && (
+                bodyComputedOverflowX != "visible" && 
+                bodyComputedOverflowX != "clip" && 
+                bodyComputedOverflowY != "visible" && 
+                bodyComputedOverflowY != "clip"
+            )
+        );
+    }
+    
+    if (!Element.prototype.scroll) {
+        Element.prototype.scroll = function () {
+            var argsLength = arguments.length;
+            var doc = this.ownerDocument;
+            var win = doc.defaultView;
+            var quirksMode = (doc.compatMode == "BackCompat");
+            var body = document.getElementsByTagName("BODY")[0];
+            var options = {};
+            var x, y;
+    
+            if (doc != window.document) return;
+            if (!win) return;
+    
+            if (argsLength === 0) {
+                return;
+            } else if (argsLength === 1) {
+                var arg = arguments[0];
+                if (typeof arg != "object") throw "Failed to execute 'scrollBy' on 'Element': parameter 1 ('options') is not an object.";
+        
+                if ('left' in arg) {
+                    options.left = normalizeNonFiniteValue(arg.left);
+                }
+        
+                if ('top' in arg) {
+                    options.top = normalizeNonFiniteValue(arg.top);
+                }
+    
+                x = (('left' in options) ? options.left : this.scrollLeft);
+                y = (('top' in options) ? options.top : this.scrollTop);
+            } else {
+                options.left = x = normalizeNonFiniteValue(arguments[0]);
+                options.top = y = normalizeNonFiniteValue(arguments[1]);
+            }
+    
+            if (this == document.documentElement) {
+                if (quirksMode) return;
+    
+                win.scroll(('scrollX' in win) ? win.scrollX : (('pageXOffset' in win) ? win.pageXOffset : this.scrollLeft), y);
+                return;
+            }
+    
+            if (this == body && quirksMode && !isBodyPotentiallyScrollable(body)) {
+                win.scroll(options.left, options.top);
+                return;
+            }
+            
+            this.scrollLeft = x;
+            this.scrollTop = y;
+        };
+    }
+    
+    if (!Element.prototype.scrollTo) {
+        Element.prototype.scrollTo = Element.prototype.scroll;
+    }
+    
+    if (!Element.prototype.scrollBy) {
+        Element.prototype.scrollBy = function () {
+            var argsLength = arguments.length;
+            var options = {};
+    
+            if (argsLength === 0) {
+                return;
+            } else if (argsLength === 1) {
+                var arg = arguments[0];
+                if (typeof arg != "object") throw "Failed to execute 'scrollBy' on 'Element': parameter 1 ('options') is not an object.";
+    
+                if ('left' in arg) {
+                    options.left = normalizeNonFiniteValue(arg.left);
+                }
+    
+                if ('top' in arg) {
+                    options.top = normalizeNonFiniteValue(arg.top);
+                }
+            } else {
+                options.left = normalizeNonFiniteValue(arguments[0]);
+                options.top = normalizeNonFiniteValue(arguments[1]);
+            }
+    
+            options.left = (('left' in options) ? options.left + this.scrollLeft : this.scrollLeft);
+            options.top = (('top' in options) ? options.top + this.scrollTop : this.scrollTop);
+            this.scroll(options);
+        };
+    }
+})();
+
 },{}]},{},[1]);
 
 "use strict";
 
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
@@ -2985,7 +3111,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -3025,18 +3150,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var __spreadProps = function __spreadProps(a, b) {
     return __defProps(a, __getOwnPropDescs(b));
   };
-  var __publicField = function __publicField(obj, key, value) {
-    __defNormalProp(obj, _typeof(key) !== "symbol" ? key + "" : key, value);
-    return value;
-  };
 
   // client/contentParsing/TextContainerDepthGroup.ts
   var TextContainerDepthGroup = /*#__PURE__*/function () {
     function TextContainerDepthGroup(depth) {
       _classCallCheck(this, TextContainerDepthGroup);
-      __publicField(this, "_depth");
-      __publicField(this, "_members");
-      __publicField(this, "_wordCount", 0);
+      this._wordCount = 0;
       this._depth = depth;
       for (var _len = arguments.length, members = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
         members[_key - 1] = arguments[_key];
@@ -3082,9 +3201,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var TraversalPathSearchResult = /*#__PURE__*/function () {
     function TraversalPathSearchResult(textContainer, paths) {
       _classCallCheck(this, TraversalPathSearchResult);
-      __publicField(this, "_textContainer");
-      __publicField(this, "_paths");
-      __publicField(this, "_preferredPath");
       this._textContainer = textContainer;
       this._paths = paths;
     }
@@ -3114,9 +3230,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         frequency = _ref.frequency,
         wordCount = _ref.wordCount;
       _classCallCheck(this, _TraversalPath);
-      __publicField(this, "_hops");
-      __publicField(this, "_frequency");
-      __publicField(this, "_wordCount");
       this._hops = hops;
       this._frequency = frequency;
       this._wordCount = wordCount;
@@ -3155,8 +3268,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var ContentContainer = /*#__PURE__*/function () {
     function ContentContainer(containerLineage, contentLineages) {
       _classCallCheck(this, ContentContainer);
-      __publicField(this, "_containerLineage", []);
-      __publicField(this, "_contentLineages", []);
+      this._containerLineage = [];
+      this._contentLineages = [];
       this._containerLineage = containerLineage;
       this._contentLineages = contentLineages;
     }
@@ -3187,8 +3300,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var _this;
       _classCallCheck(this, ImageContainer);
       _this = _super.call(this, containerLineage, contentLineages);
-      __publicField(_assertThisInitialized(_this), "_caption");
-      __publicField(_assertThisInitialized(_this), "_credit");
       _this._caption = caption;
       _this._credit = credit;
       return _this;
@@ -3224,7 +3335,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var _this2;
       _classCallCheck(this, TextContainer);
       _this2 = _super2.call(this, containerLineage, contentLineages);
-      __publicField(_assertThisInitialized(_this2), "_wordCount");
       _this2._wordCount = wordcount;
       return _this2;
     }
@@ -3325,17 +3435,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var Config = /*#__PURE__*/function () {
     function Config(universal, publisher, contentSearchRootElement) {
       _classCallCheck(this, Config);
-      __publicField(this, "_textContainerSearch");
-      __publicField(this, "_textContainerFilter");
-      __publicField(this, "_imageContainerSearch");
-      __publicField(this, "_imageContainerFilter");
-      __publicField(this, "_imageContainerMetadata");
-      __publicField(this, "_imageContainerContent");
-      __publicField(this, "_textContainerSelection");
-      __publicField(this, "_contentSearchRootElementSelector");
-      __publicField(this, "_transpositions");
-      __publicField(this, "_wordCountTraversalPathSearchLimitMultiplier");
-      __publicField(this, "_imageStrategy");
       this._textContainerFilter = universal.textContainerFilter;
       this._imageContainerMetadata = universal.imageContainerMetadata;
       this._imageContainerContent = universal.imageContainerContent;
@@ -4388,13 +4487,21 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     };
   }
 
+  // client/reader.ts
+  function continueReadingFrom(page, scrollContainer, callback) {
+    var scrollTop = page.getBookmarkScrollTop();
+    if (scrollTop > window.innerHeight) {
+      setTimeout(function () {
+        scrollContainer.scrollTo(0, scrollTop);
+        callback();
+      }, 350);
+    }
+  }
+
   // client/reading/ReadState.ts
   var ReadState = /*#__PURE__*/function () {
     function _ReadState(data) {
       _classCallCheck(this, _ReadState);
-      __publicField(this, "_state");
-      __publicField(this, "_wordCount");
-      __publicField(this, "_wordsRead");
       if (data[0] instanceof _ReadState) {
         var readStates = data;
         this._state = readStates[0]._state.slice();
@@ -4515,8 +4622,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var Line = /*#__PURE__*/function () {
     function Line(top, height, readState) {
       _classCallCheck(this, Line);
-      __publicField(this, "_top");
-      __publicField(this, "_readState");
       this._top = top;
       this._readState = readState;
     }
@@ -4549,14 +4654,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var ContentElement = /*#__PURE__*/function () {
     function ContentElement(element, wordCount) {
       _classCallCheck(this, ContentElement);
-      __publicField(this, "_element");
-      __publicField(this, "_lineHeight");
-      __publicField(this, "_wordCount");
-      __publicField(this, "_lines");
-      __publicField(this, "_contentOffset");
-      __publicField(this, "_contentRect");
-      __publicField(this, "_isDebugging", false);
-      __publicField(this, "_debugElements", []);
+      this._isDebugging = false;
+      this._debugElements = [];
       this._element = element;
       this._contentOffset = this._getContentOffset();
       this._contentRect = this._getContentRect();
@@ -4830,7 +4929,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var Page = /*#__PURE__*/function () {
     function Page(primaryTextContainers) {
       _classCallCheck(this, Page);
-      __publicField(this, "_contentEls");
       this._contentEls = primaryTextContainers.reduce(function (contentElements, textContainer) {
         return contentElements.concat(findContentElements(textContainer.containerElement));
       }, []).sort(function (a, b) {
@@ -4943,14 +5041,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     function Reader(onCommitReadState) {
       var _this6 = this;
       _classCallCheck(this, Reader);
-      __publicField(this, "_commitInterval");
-      __publicField(this, "_isReading", false);
-      __publicField(this, "_lastCommitPercentComplete", 0);
-      __publicField(this, "_lastReadTimestamp");
-      __publicField(this, "_offsetUpdateInterval");
-      __publicField(this, "_onCommitReadState");
-      __publicField(this, "_page");
-      __publicField(this, "_read", function () {
+      this._isReading = false;
+      this._lastCommitPercentComplete = 0;
+      this._read = function () {
         if (_this6._isReading) {
           var now = Date.now(),
             elapsed = now - (_this6._lastReadTimestamp || now - 300),
@@ -4965,7 +5058,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           _this6._lastReadTimestamp = now;
           window.setTimeout(_this6._read, 300);
         }
-      });
+      };
       this._onCommitReadState = onCommitReadState;
       window.document.addEventListener("visibilitychange", function () {
         if (_this6._page) {
@@ -5037,380 +5130,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     return Reader;
   }();
 
-  // client/reading/utils.ts
-  var absoluteUrlRegex = /^(https?:)?\/{2}(?!\/)/;
-  function getElementAttribute(element, selector) {
-    return element ? selector(element) : null;
-  }
-  function matchGetAbsoluteUrl(protocol, url) {
-    if (url) {
-      var match = url.match(absoluteUrlRegex);
-      if (match) {
-        if (!match[1]) {
-          return protocol.replace(/:$/, "") + ":" + url;
-        } else {
-          return url;
-        }
-      }
-    }
-    return null;
-  }
-  function getWords(text) {
-    return text && text.match(/\S+/g) || [];
-  }
-
-  // client/reading/parseElementMicrodata.ts
-  var valueMap = {
-    a: "href",
-    img: "src",
-    link: "href",
-    meta: "content",
-    object: "data",
-    time: "datetime"
-  };
-  var itemTypeRegExp = /schema\.org\/(.+)/;
-  function isScopeElement(element) {
-    return element.hasAttribute("itemscope") || element.hasAttribute("itemtype");
-  }
-  function getElementValue(element) {
-    var tagName = element.tagName.toLowerCase();
-    return valueMap.hasOwnProperty(tagName) ? element.getAttribute(valueMap[tagName]) : element.textContent;
-  }
-  function getElementType(element, isTopLevel) {
-    var type = {};
-    if (element.hasAttribute("itemtype")) {
-      if (isTopLevel) {
-        type["@context"] = "http://schema.org";
-      }
-      var itemType = element.getAttribute("itemtype"),
-        match = itemType.match(itemTypeRegExp);
-      if (match && match.length === 2) {
-        type["@type"] = match[1];
-      } else {
-        type["@type"] = itemType;
-      }
-    }
-    return type;
-  }
-  function mergeValue(properties, value, scope) {
-    properties.forEach(function (property) {
-      if (scope.hasOwnProperty(property)) {
-        if (scope[property] instanceof Array) {
-          scope[property].push(value);
-        } else {
-          scope[property] = [scope[property], value];
-        }
-      } else {
-        scope[property] = value;
-      }
-    });
-    return value;
-  }
-  function parseElementMicrodata(element) {
-    var topLevelTypes = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-    var scope = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-    if (scope && element.hasAttribute("itemprop")) {
-      var properties = getWords(element.getAttribute("itemprop"));
-      if (isScopeElement(element)) {
-        scope = mergeValue(properties, getElementType(element), scope);
-      } else if (!element.hasAttribute("itemid")) {
-        mergeValue(properties, getElementValue(element), scope);
-      }
-    } else if (isScopeElement(element)) {
-      topLevelTypes.push(scope = getElementType(element, true));
-    }
-    for (var i = 0; i < element.children.length; i++) {
-      parseElementMicrodata(element.children[i], topLevelTypes, scope);
-    }
-    return topLevelTypes;
-  }
-  var parseElementMicrodata_default = parseElementMicrodata;
-
-  // client/reading/parseSchema.ts
-  function first(value, map) {
-    var retValue = value instanceof Array ? value[0] : value;
-    return map && retValue ? map(retValue) : retValue;
-  }
-  function many(value, map) {
-    var retValue = value instanceof Array ? value : value ? [value] : [];
-    return map ? retValue.map(map) : retValue;
-  }
-  function processKeywords(keywords) {
-    var tags = [];
-    if (keywords) {
-      if (Array.isArray(keywords)) {
-        var _iterator2 = _createForOfIteratorHelper(keywords),
-          _step2;
-        try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var element = _step2.value;
-            tags.push.apply(tags, _toConsumableArray(processKeywords(element)));
-          }
-        } catch (err) {
-          _iterator2.e(err);
-        } finally {
-          _iterator2.f();
-        }
-      } else if (typeof keywords === "string") {
-        tags.push.apply(tags, _toConsumableArray(keywords.split(",")));
-      }
-    }
-    return tags;
-  }
-  function parseSchema(topLevelTypes) {
-    var data = topLevelTypes.find(function (type) {
-      return type.hasOwnProperty("@type") && (type["@type"].endsWith("Article") || type["@type"] === "BlogPosting");
-    });
-    if (data) {
-      var firstImage = first(data.image);
-      return {
-        url: first(data.url),
-        article: {
-          title: first(data.headline) || first(data.name),
-          source: first(data.publisher || data.sourceOrganization || data.provider, function (x) {
-            return {
-              name: first(x.name),
-              url: first(x.url)
-            };
-          }) || {},
-          datePublished: first(data.datePublished),
-          dateModified: first(data.dateModified),
-          authors: many(data.author || data.creator, function (x) {
-            return {
-              name: first(x.name),
-              url: first(x.url)
-            };
-          }),
-          section: first(data.articleSection) || first(data.printSection),
-          description: first(data.description),
-          tags: processKeywords(data.keywords),
-          pageLinks: [],
-          imageUrl: firstImage ? typeof firstImage === "string" || _typeof(firstImage) === "object" ? typeof firstImage === "string" ? firstImage : firstImage.contentUrl || firstImage.url : null : null
-        }
-      };
-    }
-    return null;
-  }
-  var parseSchema_default = parseSchema;
-
-  // client/reading/parseMiscMetadata.ts
-  function parseAuthors() {
-    var metaElements = document.querySelectorAll('meta[name="author"]');
-    if (metaElements.length) {
-      return Array.from(metaElements).map(function (element) {
-        return {
-          name: element.content
-        };
-      });
-    }
-    var microdataElements = document.querySelectorAll('[itemprop="author"]');
-    if (microdataElements.length) {
-      return Array.from(microdataElements).map(function (element) {
-        return {
-          name: element.textContent
-        };
-      });
-    }
-    return [];
-  }
-  function parseMiscMetadata(documentLocation) {
-    var articleTitleElements = document.querySelectorAll("article h1");
-    return {
-      url: documentLocation.href.split(/\?|#/)[0],
-      article: {
-        title: articleTitleElements.length === 1 ? articleTitleElements[0].textContent.trim() : document.title,
-        source: {
-          url: matchGetAbsoluteUrl(documentLocation.protocol, getElementAttribute(document.querySelector('link[rel="publisher"]'), function (e) {
-            return e.href;
-          })) || documentLocation.protocol + "//" + documentLocation.hostname
-        },
-        description: getElementAttribute(document.querySelector('meta[name="description"]'), function (e) {
-          return e.content;
-        }),
-        authors: parseAuthors(),
-        tags: [],
-        pageLinks: [],
-        imageUrl: getElementAttribute(document.querySelector('meta[name="twitter:image"]'), function (e) {
-          return e.content;
-        })
-      }
-    };
-  }
-
-  // client/reading/parseOpenGraph.ts
-  function findMetaElementContent(property, elements) {
-    return getElementAttribute(elements.find(function (e) {
-      return e.getAttribute("property") === property;
-    }), function (e) {
-      return e.content;
-    });
-  }
-  function parseOpenGraph(documentLocation) {
-    var elements = Array.from(document.getElementsByTagName("meta"));
-    if (/article/i.test(findMetaElementContent("og:type", elements))) {
-      return {
-        url: findMetaElementContent("og:url", elements),
-        article: {
-          title: findMetaElementContent("og:title", elements),
-          source: {
-            name: findMetaElementContent("og:site_name", elements)
-          },
-          datePublished: findMetaElementContent("article:published_time", elements),
-          dateModified: findMetaElementContent("article:modified_time", elements),
-          authors: elements.filter(function (e) {
-            return e.getAttribute("property") === "article:author";
-          }).map(function (e) {
-            var url = matchGetAbsoluteUrl(documentLocation.protocol, e.content);
-            return url ? {
-              url: url
-            } : {
-              name: e.content
-            };
-          }),
-          section: findMetaElementContent("article:section", elements),
-          description: findMetaElementContent("og:description", elements),
-          tags: elements.filter(function (e) {
-            return e.getAttribute("property") === "article:tag";
-          }).map(function (e) {
-            return e.content;
-          }),
-          pageLinks: [],
-          imageUrl: findMetaElementContent("og:image", elements)
-        }
-      };
-    }
-    return null;
-  }
-  var parseOpenGraph_default = parseOpenGraph;
-
-  // client/reading/parseDocumentMetadata.ts
-  var emptyResult = {
-    url: null,
-    article: {
-      title: null,
-      source: {},
-      authors: [],
-      tags: [],
-      pageLinks: []
-    }
-  };
-  function first2(propSelector, filterOrResults, results) {
-    var filter;
-    if (filterOrResults instanceof Array) {
-      filter = function filter(value) {
-        return !!value;
-      };
-      results = filterOrResults;
-    } else {
-      filter = filterOrResults;
-    }
-    return results.map(propSelector).find(filter);
-  }
-  function most(propSelector, filterOrResults, results) {
-    var filter;
-    if (filterOrResults instanceof Array) {
-      results = filterOrResults;
-    } else {
-      filter = filterOrResults;
-    }
-    var values = results.map(propSelector);
-    if (filter) {
-      values = values.filter(function (values2) {
-        return values2.every(filter);
-      });
-    }
-    return values.sort(function (a, b) {
-      return b.length - a.length;
-    })[0];
-  }
-  function merge(schema, misc, openGraph) {
-    var orderedResults = [schema, openGraph, misc];
-    return {
-      url: misc.url,
-      article: {
-        title: first2(function (x) {
-          return x.article.title;
-        }, orderedResults),
-        source: first2(function (x) {
-          return x.article.source;
-        }, function (x) {
-          return !!x.name;
-        }, orderedResults),
-        datePublished: first2(function (x) {
-          return x.article.datePublished;
-        }, orderedResults),
-        dateModified: first2(function (x) {
-          return x.article.dateModified;
-        }, orderedResults),
-        authors: most(function (x) {
-          return x.article.authors;
-        }, function (x) {
-          return !!x.name;
-        }, orderedResults),
-        section: first2(function (x) {
-          return x.article.section;
-        }, orderedResults),
-        description: first2(function (x) {
-          return x.article.description;
-        }, orderedResults),
-        tags: most(function (x) {
-          return x.article.tags;
-        }, orderedResults),
-        pageLinks: most(function (x) {
-          return x.article.pageLinks;
-        }, orderedResults),
-        imageUrl: first2(function (x) {
-          return x.article.imageUrl;
-        }, [misc, openGraph, schema])
-      }
-    };
-  }
-  var articleElementAttributeBlacklistRegex = /((^|\W)comments?($|\W))/i;
-  function parseDocumentMetadata(params) {
-    var isArticle = false;
-    var misc = parseMiscMetadata(params.url);
-    if (Array.from(document.getElementsByTagName("article")).filter(function (element) {
-      return !(articleElementAttributeBlacklistRegex.test(element.id) || articleElementAttributeBlacklistRegex.test(element.classList.value));
-    }).length === 1) {
-      isArticle = true;
-    }
-    var openGraph = parseOpenGraph_default(params.url);
-    if (openGraph) {
-      isArticle = true;
-    } else {
-      openGraph = emptyResult;
-    }
-    var schema;
-    var script = document.querySelector('script[type="application/ld+json"]');
-    if (script && script.textContent) {
-      var cdataMatch = script.textContent.match(/^\s*\/\/<!\[CDATA\[([\s\S]*)\/\/\]\]>\s*$/);
-      try {
-        if (cdataMatch) {
-          schema = parseSchema_default([JSON.parse(cdataMatch[1])]);
-        } else {
-          schema = parseSchema_default([JSON.parse(script.textContent)]);
-        }
-      } catch (ex) {}
-    }
-    if (schema) {
-      isArticle = true;
-    } else if (schema = parseSchema_default(parseElementMicrodata_default(document.documentElement))) {
-      isArticle = true;
-    } else {
-      schema = emptyResult;
-    }
-    return {
-      isArticle: isArticle,
-      metadata: merge(schema, misc, openGraph)
-    };
-  }
-
   // client.ts
   var viewportHeight = $(window).height();
   var width = document.body.clientWidth;
-  $(document).ready(function () {
+  $(function () {
     var containerId = "readup-article-container";
-    $("#".concat(containerId)).click(function (event) {
+    $("#".concat(containerId)).on("click", function (event) {
       var x = event.pageX;
       console.log("".concat(event.pageX, ", ").concat(event.pageY));
       var containerNode = $(this).get(0);
@@ -5440,17 +5165,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           dataType: "json",
           contentType: "application/json; charset=utf-8",
           data: data
-        }).done(function (d) {
-          return console.log("OK", d);
-        }).fail(function (e) {
-          return console.error("No", e);
         });
       });
       console.log("Constructed reader");
-      var metadataParseResult = parseDocumentMetadata({
-        // url: documentLocation,
-        url: window.location
-      });
       var contentParseResult = parseDocumentContent({
         // url: documentLocation,
         url: window.location
@@ -5467,6 +5184,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         page.setReadState(userArticle.userPage.readState);
       }
       reader.loadPage(page);
+      if (page.getBookmarkScrollTop() > window.innerHeight) {
+        continueReadingFrom(page, docContainer, function () {
+          console.log("Resuming where left off");
+        });
+      }
     }
   });
 })();

@@ -23,6 +23,11 @@ require("element-remove-polyfill");
 // require("element-dataset");
 // require("conglomerate-element-dataset");
 
+// Readup continue where you left off uses "scrollTo"
+// inner scroll containers support .scrollTop =
+// but the less OG code to change, the better.
+require("element-scroll-polyfill");
+
 // https://vanillajstoolkit.com/polyfills/append/
 /**
  * ChildNode.append() polyfill

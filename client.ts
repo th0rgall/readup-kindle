@@ -13,6 +13,7 @@
 // import "core-js/actual/string/ends-with";
 
 import parseDocumentContent from "./client/contentParsing/parseDocumentContent.ts";
+import { continueReadingFrom } from "./client/reader.ts";
 // import pruneDocument from "./client/contentParsing/pruneDocument.ts";
 import Page from "./client/reading/Page.ts";
 import Reader from "./client/reading/Reader.ts";
@@ -24,11 +25,11 @@ import parseDocumentMetadata from "./client/reading/parseDocumentMetadata.ts";
 
 const viewportHeight = $(window).height();
 const width = document.body.clientWidth;
-$(document).ready(function () {
+$(function () {
   //   $("p").first().html(`h: ${viewportHeight}\n`);
   //   document.documentElement.scrollTop = "300px";
   const containerId = "readup-article-container";
-  $(`#${containerId}`).click(function (event) {
+  $(`#${containerId}`).on("click", function (event) {
     //   This works, so the touch event does happen
     // $("p").first().remove();
     const x = event.pageX;
@@ -97,10 +98,10 @@ $(document).ready(function () {
     });
     console.log("Constructed reader");
 
-    const metadataParseResult = parseDocumentMetadata({
-      // url: documentLocation,
-      url: window.location,
-    });
+    // const metadataParseResult = parseDocumentMetadata({
+    //   // url: documentLocation,
+    //   url: window.location,
+    // });
 
     const contentParseResult = parseDocumentContent({
       // url: documentLocation,
@@ -152,8 +153,14 @@ $(document).ready(function () {
       console.log("Setting page readState");
       page.setReadState(userArticle.userPage.readState);
     }
+
     reader.loadPage(page);
-    // });
+
+    if (page.getBookmarkScrollTop() > window.innerHeight) {
+      continueReadingFrom(page, docContainer, () => {
+        console.log("Resuming where left off");
+      });
+    }
   }
 });
 

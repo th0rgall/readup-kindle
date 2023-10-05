@@ -12,6 +12,7 @@
     "element-dataset": "^2.2.6",
     "element-matches-polyfill": "^1.0.0",
     "element-remove-polyfill": "^1.1.0",
+    "element-scroll-polyfill": "^1.0.1",
     "esbuild": "^0.19.4"
   },
   "type": "module"
