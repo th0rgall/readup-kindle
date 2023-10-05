@@ -43,8 +43,8 @@ const articleStyles = (isKindle: boolean) =>
 
 const contentStyles = (isKindle: boolean) =>
   css({
-    "@apply": `text-xl overflow-y-scroll mx-auto border-none pl-6 pr-1 py-8 ${
-      !isKindle ? "max-w-3xl" : ""
+    "@apply": `text-xl overflow-y-scroll mx-auto border-none py-8 ${
+      isKindle ? "pl-6 pr-1" : "max-w-3xl px-6"
     }`,
   });
 

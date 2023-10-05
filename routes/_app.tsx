@@ -23,10 +23,14 @@ export default async function App(
 ) {
   const ua = req.headers.get("User-Agent");
   const { browser, device } = UAParser(ua);
+
   const isReadPage = ctx.route.startsWith("/read");
-  const isLoginPage = ctx.route.startsWith("/login");
+  const isLoginPage = ctx.route === "/login";
   const isIndexPage = ctx.route === "/";
+  const isMyReadsPage = ctx.route === "/myreads";
+
   const isKindle = browser.name === "Kindle" || device.vendor === "Kindle";
+
   // Kindle reading in pagination mode
   const isKindlePageReader = isReadPage && isKindle;
   const isGeneralFullscreen = isKindlePageReader || isLoginPage;
@@ -76,7 +80,7 @@ export default async function App(
           <ctx.Component />
           <script src="//code.jquery.com/jquery-3.7.1.min.js"></script>
           {isReadPage && <ClientScripts />}
-          {isIndexPage && (
+          {(isIndexPage || isMyReadsPage) && (
             <Script code={await Deno.readTextFile("./client/index.js")} />
           )}
         </body>
