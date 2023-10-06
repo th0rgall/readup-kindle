@@ -47,12 +47,13 @@ $(function () {
       }
     });
 
-    $(`#${containerId}`).on("click", function (event) {
+    // Capture clicks in the overlay to hack around the text box selection
+    $("#readup-overlay").on("click", function (event) {
       const x = event.pageX;
       const y = event.pageY;
       console.log(`${event.pageX}, ${event.pageY}`);
-      const containerNode = $(this).get(0);
-      var currentScroll = $(this).scrollTop();
+      const containerNode = articleContainer;
+      var currentScroll = containerNode.scrollTop;
       const isTopClick = y < viewportHeight / 6;
       if (!isTopClick && controls.is(":visible")) {
         // Hide, but don't scroll

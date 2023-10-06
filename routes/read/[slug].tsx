@@ -13,41 +13,6 @@ import { Head } from "$fresh/runtime.ts";
 import { TITLE } from "../../lib/constants.ts";
 import Script from "../../components/Script.tsx";
 
-const articleStyles = (isKindle: boolean) =>
-  css([
-    // apply`px-6 py-8`,
-    {
-      // kindle scrollbar hack
-      ...(isKindle
-        ? {
-          height: "1289px",
-          overflow: "scroll",
-          border: "none",
-        }
-        : {
-          height: "100%",
-        }),
-      fontFamily: "'Bookerly', serif",
-      // "@apply": "pt-2",
-      // overflow will only happen when acenstral containers are contained to the screen height
-      // not sure where this & is documented, but it works! It's equivalent to a css space
-      // :global actually applies globally (unscoped, wherever defined)
-      "&": {
-        h1: apply`text-2xl font(sans bold)`,
-        p: {
-          "@apply": "mb-4",
-        },
-      },
-    },
-  ]);
-
-const contentStyles = (isKindle: boolean) =>
-  css({
-    "@apply": `text-xl overflow-y-scroll mx-auto border-none py-8 ${
-      isKindle ? "pl-6 pr-1" : "max-w-3xl px-6"
-    }`,
-  });
-
 const removeElementsWithQuerySelector = (doc: HTMLDocument, selector: string) =>
   Array.from(doc.querySelectorAll(selector)).forEach((e) => e._remove());
 // TODO: is this a correct replication?
@@ -181,6 +146,47 @@ export default async function Read(
   const articleTitle = userArticleResult?.userArticle.title ||
     metadataParseResult.metadata.article.title;
 
+  const articleStyles = css([
+    // apply`px-6 py-8`,
+    {
+      // kindle scrollbar hack
+      ...(isKindle
+        ? {
+          height: "1289px",
+          overflow: "scroll",
+          border: "none",
+          // the below is important for the overlay hack
+          position: "relative",
+        }
+        : {
+          height: "100%",
+        }),
+      fontFamily: "'Bookerly', serif",
+      // "@apply": "pt-2",
+      // overflow will only happen when acenstral containers are contained to the screen height
+      // not sure where this & is documented, but it works! It's equivalent to a css space
+      // :global actually applies globally (unscoped, wherever defined)
+      "&": {
+        h1: apply`text-2xl font(sans bold)`,
+        p: {
+          "@apply": "mb-4",
+        },
+      },
+    },
+  ]);
+
+  const contentStyles = css({
+    // Kindle note: applying `overflow-y-scroll` here:
+    // - fixes the "selected text container" edges all articles get
+    // - ... but in some articles, cuts out the entire right half!
+    // - the "overlay hack" seems to be a more reliable workaround
+    "@apply": `text-xl mx-auto border-none py-8 ${
+      isKindle ? "pl-6 pr-1" : "max-w-3xl px-6"
+    }`,
+  });
+
+  const overlayStyles = apply`absolute h-full w-full inset-0`;
+
   return (
     // height: 100% helps us get a JS-scrollable inner container
     // somehow the html/body container couldn't be scrolled
@@ -188,12 +194,6 @@ export default async function Read(
       <Head>
         <title>{TITLE} | {articleTitle}</title>
       </Head>
-      <div class="readup-reader-controls" style={{ display: "none" }}>
-        <div class="readup-home">
-          <a href="/">← Home</a>
-        </div>
-        <div class="readup-progress">...</div>
-      </div>
       <Script
         code={`window.userArticleResult = ${
           JSON.stringify(userArticleResult)
@@ -201,11 +201,11 @@ export default async function Read(
       />
       <div
         id="readup-article-container"
-        class={articleStyles(isKindle)}
+        class={articleStyles}
       >
         <div
           id="readup-article-content"
-          class={contentStyles(isKindle)}
+          class={contentStyles}
         >
           <h1>
             {articleTitle}
@@ -221,6 +221,19 @@ export default async function Read(
           >
           </div>
         </div>
+      </div>
+      {
+        /*
+        This overlay serves to capture clicks intended for the text below
+        it prevents the text container from being "selected", which gives it a border.
+       */
+      }
+      {isKindle && <div id="readup-overlay" class={overlayStyles}></div>}
+      <div class="readup-reader-controls" style={{ display: "none" }}>
+        <div class="readup-home">
+          <a href="/">← Home</a>
+        </div>
+        <div class="readup-progress">...</div>
       </div>
     </>
   );

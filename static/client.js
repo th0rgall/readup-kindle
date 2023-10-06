@@ -5134,9 +5134,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   var viewportHeight = $(window).height();
   var width = document.body.clientWidth;
   $(function () {
-    $("div[data-href]").on("click", function () {
-      window.open($(this).attr("data-href"), "_self");
-    });
     var containerId = "readup-article-container";
     var articleContainer = document.getElementById(containerId);
     if (articleContainer) {
@@ -5147,12 +5144,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           $(this).toggle();
         }
       });
-      $("#".concat(containerId)).on("click", function (event) {
+      $("#readup-overlay").on("click", function (event) {
         var x = event.pageX;
         var y = event.pageY;
         console.log("".concat(event.pageX, ", ").concat(event.pageY));
-        var containerNode = $(this).get(0);
-        var currentScroll = $(this).scrollTop();
+        var containerNode = articleContainer;
+        var currentScroll = containerNode.scrollTop;
         var isTopClick = y < viewportHeight / 6;
         if (!isTopClick && controls.is(":visible")) {
           controls.hide();
