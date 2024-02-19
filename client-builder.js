@@ -4,14 +4,15 @@ import { createWriteStream, unlinkSync, watch, writeFileSync } from "fs";
 import browserify from "browserify";
 
 const b = browserify();
-b.add("./metafills.js");
-// const writableStream = createWriteStream("./out");
-const readStream = b.bundle();
 
 const entryFile = "./client.ts";
 const esbuildTempFile = "./static/client.esbuild.js";
 
 watch(entryFile, async (eventType, filename) => {
+  b.add("./metafills.js");
+  // const writableStream = createWriteStream("./out");
+  const readStream = b.bundle();
+
   console.log("Rebuilding the client...");
   if (!(filename && eventType === "change")) {
     return;
@@ -72,5 +73,7 @@ watch(entryFile, async (eventType, filename) => {
     transformedCode,
     "utf-8",
   );
+
+  b.reset();
   // unlinkSync(esbuildTempFile);
 });
