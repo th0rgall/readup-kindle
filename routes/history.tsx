@@ -8,18 +8,13 @@ import { RouteContext } from "$fresh/server.ts";
 export default async function MyReads(req: Request, ctx: RouteContext) {
   // forward headers
   const myReads = await fetch(
-    `${READUP_API_BASE}/Articles/ListStarred?pageNumber=1&minLength&maxLength`,
+    `${READUP_API_BASE}/Articles/ListHistory?pageNumber=1&minLength&maxLength`,
     {
       headers: new Headers({
         "Cookie": req.headers.get("Cookie") || "",
       }),
     },
-  ).then((r) =>
-    r.text().then((t) => {
-      console.log("text: ", t);
-      return JSON.parse(t);
-    })
-  ) as PageResult<UserArticle>;
+  ).then((r) => r.json()) as PageResult<UserArticle>;
 
   return (
     <ListPageScaffold ctx={ctx}>

@@ -1,6 +1,8 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import getAndRegisterRead from "../../lib/reading.ts";
 import { rFetch } from "../../lib/readup-api.ts";
 import { inputClass, labelClass } from "../../lib/style.ts";
+import { MWState } from "../_middleware.ts";
 
 export const handler: Handlers<any, MWState> = {
   async POST(req, ctx) {
@@ -8,7 +10,16 @@ export const handler: Handlers<any, MWState> = {
     const url = form.get("url")?.toString();
     console.log(url);
 
-    return new Response("OK");
+    let result;
+    try {
+      result = await getAndRegisterRead(url, ctx);
+    } catch (e) {
+      return new Response(e, { status: 500 });
+    }
+
+    const { userArticleResult, metadataParseResult, contentRoot } = result;
+
+    return new Response("OK maybe");
   },
 };
 

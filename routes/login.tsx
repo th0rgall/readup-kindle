@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { apply, tw } from "twind";
-import { READUP_API_BASE, TITLE } from "../lib/constants.ts";
+import { READUP_API_BASE, READUP_HOST_URL, TITLE } from "../lib/constants.ts";
 import { MWState } from "./_middleware.ts";
 import { inputClass, labelClass } from "../lib/style.ts";
 
@@ -55,7 +55,7 @@ export const handler: Handlers<any, MWState> = {
 
     const returnCookieSource = response.headers.get("Set-Cookie");
     const transformedReturnCookie = returnCookieSource?.replaceAll(
-      ".readup.org",
+      `.${READUP_HOST_URL.hostname}`,
       host,
     )
       // todo: fix security here... once we're on https
@@ -65,7 +65,6 @@ export const handler: Handlers<any, MWState> = {
       .replace("httponly", "");
 
     // Redirect user
-    console.log("");
     const headers = new Headers({
       "Set-Cookie": transformedReturnCookie || "",
       "Location": "/",

@@ -7,12 +7,13 @@ import * as $1 from "./routes/_app.tsx";
 import * as $2 from "./routes/_middleware.ts";
 import * as $3 from "./routes/api/_middleware.ts";
 import * as $4 from "./routes/api/x.ts";
-import * as $5 from "./routes/index.tsx";
-import * as $6 from "./routes/ink/add.tsx";
-import * as $7 from "./routes/login.tsx";
-import * as $8 from "./routes/logout.tsx";
-import * as $9 from "./routes/myreads.tsx";
-import * as $10 from "./routes/read/[slug].tsx";
+import * as $5 from "./routes/history.tsx";
+import * as $6 from "./routes/index.tsx";
+import * as $7 from "./routes/ink/add.tsx";
+import * as $8 from "./routes/login.tsx";
+import * as $9 from "./routes/logout.tsx";
+import * as $10 from "./routes/myreads.tsx";
+import * as $11 from "./routes/read/[slug].tsx";
 
 const manifest = {
   routes: {
@@ -21,12 +22,13 @@ const manifest = {
     "./routes/_middleware.ts": $2,
     "./routes/api/_middleware.ts": $3,
     "./routes/api/x.ts": $4,
-    "./routes/index.tsx": $5,
-    "./routes/ink/add.tsx": $6,
-    "./routes/login.tsx": $7,
-    "./routes/logout.tsx": $8,
-    "./routes/myreads.tsx": $9,
-    "./routes/read/[slug].tsx": $10,
+    "./routes/history.tsx": $5,
+    "./routes/index.tsx": $6,
+    "./routes/ink/add.tsx": $7,
+    "./routes/login.tsx": $8,
+    "./routes/logout.tsx": $9,
+    "./routes/myreads.tsx": $10,
+    "./routes/read/[slug].tsx": $11,
   },
   islands: {},
   baseUrl: import.meta.url,

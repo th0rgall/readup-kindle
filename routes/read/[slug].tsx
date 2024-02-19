@@ -1,147 +1,28 @@
 import { RouteContext } from "$fresh/server.ts";
-import { DOMParser, HTMLDocument } from "deno_dom";
-import parseDocumentContent from "../../lib/contentParsing/parseDocumentContent.ts";
-import pruneDocument from "../../lib/contentParsing/pruneDocument.ts";
 import { apply, css } from "twind/css";
-import parseDocumentMetadata from "../../lib/reading/parseDocumentMetadata.ts";
-import createPageParseResult from "../../lib/reading/createPageParseResult.ts";
-import { rFetch } from "../../lib/readup-api.ts";
 import { MWState } from "../_middleware.ts";
-import ArticleLookupResult from "../../models/ArticleLookupResult.ts";
 import Authors from "../../components/Authors.tsx";
 import { Head } from "$fresh/runtime.ts";
 import { TITLE } from "../../lib/constants.ts";
 import Script from "../../components/Script.tsx";
-
-const removeElementsWithQuerySelector = (doc: HTMLDocument, selector: string) =>
-  Array.from(doc.querySelectorAll(selector)).forEach((e) => e._remove());
-// TODO: is this a correct replication?
-
-const querySelectorsForElementsToRemove = [
-  'script:not([type="application/json+ld"])',
-  // 'link[rel="preload"][as="script"]',
-  // 'link[rel="preload"][as="style"]',
-  // 'link[rel="preload"][as="font"]',
-  'link[rel="preload"]',
-  "iframe",
-  "style",
-  'link[rel="stylesheet"]',
-  'meta[name="viewport"]',
-];
+import getAndRegisterRead from "../../lib/reading.ts";
 
 export default async function Read(
   req: Request,
   ctx: RouteContext<unknown, MWState>,
 ) {
   const isKindle = ctx.state.isKindle;
-  // const randomIndex = Math.floor(Math.random() * JOKES.length);
-  // const body = JOKES[randomIndex];
-  // return new Response(body);
   const url = new URL(req.url);
   const pageUrl = url.searchParams.get("url") || "";
 
-  const loadError = () =>
-    new Response(
-      "The article couldn't be loaded! It might be that this publisher blocks proxies.",
-      { status: 500 },
-    );
-
-  let page: string;
+  let result;
   try {
-    const resp = await fetch(pageUrl);
-    if (!(resp.status >= 200 && resp.status <= 399)) {
-      return loadError();
-    }
-    page = await resp.text();
+    result = await getAndRegisterRead(pageUrl, ctx);
   } catch (e) {
-    return loadError();
-  }
-  let document: HTMLDocument | null;
-
-  try {
-    document = new DOMParser().parseFromString(page, "text/html");
-  } catch (e) {
-    return new Response(`The article couldn't be parsed by Deno. ${e}`, {
-      status: 500,
-    });
+    return new Response(e, { status: 500 });
   }
 
-  // Clean doc
-  // Remove scripts
-  // document
-  //   ?.querySelectorAll("script")
-  //   .forEach((e) => e.parentNode?.removeChild(e));
-
-  querySelectorsForElementsToRemove.forEach((qs) =>
-    removeElementsWithQuerySelector(document!, qs)
-  );
-
-  globalThis.document = document;
-
-  const metadataParseResult = parseDocumentMetadata({
-    url: new URL(pageUrl),
-    // url: window.location,
-  });
-
-  let contentRoot: HTMLDivElement;
-  let pageInfoResult: ReturnType<typeof createPageParseResult>;
-
-  try {
-    const contentParseResult = parseDocumentContent({
-      // url: documentLocation,
-      url: new URL(pageUrl),
-    });
-
-    const parseResult = pruneDocument(contentParseResult);
-    contentRoot = parseResult.contentRoot;
-
-    pageInfoResult = createPageParseResult(
-      metadataParseResult,
-      contentParseResult,
-    );
-  } catch (e) {
-    // return `Readup.ink's parser stumbled upon a bug: ${e}`;
-    return new Response(`Readup.ink's parser stumbled upon a bug: ${e}`, {
-      status: 500,
-    });
-  }
-
-  let userArticleResult: ArticleLookupResult | null = null;
-  if (ctx.state.hasAuth) {
-    // why requests this here, and not on the client?
-    // because it's less easy to server the <head> that we just fetched to the client
-    // without getting into dirty tricks & <iframe> s (not sure if those are supported)
-    const resp = await rFetch(
-      "/Extension/GetUserArticle",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(pageInfoResult),
-      },
-      ctx,
-    );
-
-    userArticleResult = await resp.json();
-    // userArticleResult = await r.text();
-  }
-  // console.log(userArticleResult);
-
-  // This is, unwrapped, what the Page() & Reader() actually expect
-  // const contentEls = contentParseResult.primaryTextContainers
-  //   .reduce<ContentElement[]>(
-  //     (contentElements, textContainer) =>
-  //       contentElements.concat(
-  //         findContentElements(textContainer.containerElement),
-  //       ),
-  //     [],
-  //   )
-  //   .sort((a, b) => a.offsetTop - b.offsetTop);
-
-  // for (const e of contentEls) {
-  //   e.element.classList.add("rce");
-  // }
+  const { userArticleResult, metadataParseResult, contentRoot } = result;
 
   const articleTitle = userArticleResult?.userArticle.title ||
     metadataParseResult.metadata.article.title;

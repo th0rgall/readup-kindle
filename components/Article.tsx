@@ -7,6 +7,7 @@ import Authors from "./Authors.tsx";
 import { State } from "../routes/_app.tsx";
 import { calculateEstimatedReadTime } from "../lib/calculate.ts";
 import { formatCountable, truncateText } from "../lib/format.ts";
+import { READUP_HOST } from "../lib/constants.ts";
 
 export type Options = {
   showDescription?: boolean;
@@ -85,7 +86,7 @@ export default function Article(
                 } mb-0.5 ${grey} text(sm)`}
               >
                 <a
-                  href={`https://readup.org/@${firstPoster}`}
+                  href={`${READUP_HOST}/@${firstPoster}`}
                   target="_blank"
                   class="underline hover:no-underline"
                 >
