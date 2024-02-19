@@ -80,7 +80,7 @@ export default async function App(
           <ctx.Component />
           <script src="//code.jquery.com/jquery-3.7.1.min.js"></script>
           {isReadPage && <ClientScripts />}
-          {(isIndexPage || isMyReadsPage) && (
+          {isKindle && (
             <Script code={await Deno.readTextFile("./client/index.js")} />
           )}
         </body>

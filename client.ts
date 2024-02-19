@@ -17,6 +17,7 @@ import parseDocumentContent from "./client/contentParsing/parseDocumentContent.t
 import { continueReadingFrom } from "./client/reader.ts";
 // import pruneDocument from "./client/contentParsing/pruneDocument.ts";
 import Page from "./client/reading/Page.ts";
+import ReadState from "./client/reading/ReadState.ts";
 import Reader from "./client/reading/Reader.ts";
 import ArticleLookupResult from "./models/ArticleLookupResult.ts";
 
@@ -31,6 +32,10 @@ declare global {
 // import styleArticleDocument, {
 //   createByline,
 // } from "./client/reading/styleArticleDocument.ts";
+
+function isKindle() {
+  return $("html").hasClass("kindle");
+}
 
 const viewportHeight = $(window).height();
 const width = document.body.clientWidth;
@@ -47,8 +52,11 @@ $(function () {
       }
     });
 
+    const clickTarget = isKindle()
+      ? "#readup-overlay"
+      : "#readup-article-container";
     // Capture clicks in the overlay to hack around the text box selection
-    $("#readup-overlay").on("click", function (event) {
+    $(clickTarget).on("click", function (event) {
       const x = event.pageX;
       const y = event.pageY;
       console.log(`${event.pageX}, ${event.pageY}`);
@@ -97,9 +105,17 @@ $(function () {
     });
 
     const page = new Page(contentParseResult.primaryTextContainers);
+
     if (userArticle) {
       console.log("Setting page readState");
-      page.setReadState(userArticle.userPage.readState);
+      const readState = userArticle.userPage.readState as ReadState;
+      page.setReadState(readState);
+      const initialPageReadState = page.getReadState();
+      console.log("initial ReadState: ", initialPageReadState);
+      // Initialize progress bar
+      progress.html(
+        Math.round(initialPageReadState.getPercentComplete()) + "",
+      );
     }
 
     reader.loadPage(page);

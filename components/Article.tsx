@@ -32,7 +32,7 @@ export default function Article(
 ): JSX.Element {
   const boxClass =
     `block relative w-full mb-2 px-3 pt-3 pb-1 border(1 gray-500) rounded no-underline ${
-      css({ textDecoration: "none !important" })
+      tw(css({ textDecoration: "none !important" }))
     }`;
   const href = `/read/${slug}?url=${encodeURIComponent(url)}`;
   const readTime = calculateEstimatedReadTime(wordCount);
@@ -77,7 +77,7 @@ export default function Article(
   return (
     <State.Consumer>
       {({ isKindle }) => (
-        <article class="">
+        <article>
           {firstPoster
             ? (
               <div
@@ -105,7 +105,11 @@ export default function Article(
               </div>
             )
             : null}
-          {/* Work around kindle underlining all links */}
+          {
+            /*
+            Workaround for the Kindle underlining all links: render links using JS
+           */
+          }
           {isKindle ? <div class={boxClass} data-href={href}>{inner}</div> : (
             <a
               class={boxClass}

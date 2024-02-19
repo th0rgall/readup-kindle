@@ -32,9 +32,12 @@ export default function Listing({ data, ...rest }: PageProps<Data>) {
     <ListPageScaffold ctx={rest}>
       <Article {...aotd}></Article>
       <h2 class={tw(activeNavClass, "mt-5 mb-2")}>Contenders</h2>
-      {data.communityReads.articles.items.map((a, i) => (
-        <Article {...a} showDescription={i <= 3} key={a.slug} />
-      ))}
+
+      {data.communityReads.articles.items.length > 0
+        ? data.communityReads.articles.items.map((a, i) => (
+          <Article {...a} showDescription={i <= 3} key={a.slug} />
+        ))
+        : <p>No articles here yet, add some above!</p>}
     </ListPageScaffold>
   );
 }

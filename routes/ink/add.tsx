@@ -1,6 +1,5 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import getAndRegisterRead from "../../lib/reading.ts";
-import { rFetch } from "../../lib/readup-api.ts";
 import { inputClass, labelClass } from "../../lib/style.ts";
 import { MWState } from "../_middleware.ts";
 
@@ -8,18 +7,22 @@ export const handler: Handlers<any, MWState> = {
   async POST(req, ctx) {
     const form = await req.formData();
     const url = form.get("url")?.toString();
-    console.log(url);
-
-    let result;
     try {
-      result = await getAndRegisterRead(url, ctx);
+      const { userArticleResult } = await getAndRegisterRead(url, ctx);
+      const slug = userArticleResult?.userArticle.slug;
+      return new Response("", {
+        status: 303,
+        headers: {
+          Location: `/read/${slug}?url=${
+            encodeURIComponent(userArticleResult?.userArticle.url || "")
+          }`,
+        },
+      });
     } catch (e) {
       return new Response(e, { status: 500 });
     }
-
-    const { userArticleResult, metadataParseResult, contentRoot } = result;
-
-    return new Response("OK maybe");
+    // const { userArticleResult, metadataParseResult, contentRoot } = result;
+    // return new Response("OK maybe");
   },
 };
 
