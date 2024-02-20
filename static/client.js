@@ -1281,7 +1281,6 @@ module.exports = function (V, P) {
 };
 
 },{"../internals/a-callable":23,"../internals/is-null-or-undefined":78}],65:[function(require,module,exports){
-(function (global){(function (){
 'use strict';
 var check = function (it) {
   return it && it.Math === Math && it;
@@ -1298,7 +1297,6 @@ module.exports =
   // eslint-disable-next-line no-new-func -- fallback
   (function () { return this; })() || this || Function('return this')();
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],66:[function(require,module,exports){
 'use strict';
 var uncurryThis = require('../internals/function-uncurry-this');
@@ -5131,6 +5129,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   }();
 
   // client.ts
+  function isKindle() {
+    return $("html").hasClass("kindle");
+  }
   var viewportHeight = $(window).height();
   var width = document.body.clientWidth;
   $(function () {
@@ -5144,7 +5145,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           $(this).toggle();
         }
       });
-      $("#readup-overlay").on("click", function (event) {
+      var clickTarget = isKindle() ? "#readup-overlay" : "#readup-article-container";
+      $(clickTarget).on("click", function (event) {
         var x = event.pageX;
         var y = event.pageY;
         console.log("".concat(event.pageX, ", ").concat(event.pageY));
@@ -5188,7 +5190,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var page = new Page(contentParseResult.primaryTextContainers);
       if (userArticle) {
         console.log("Setting page readState");
-        page.setReadState(userArticle.userPage.readState);
+        var readState = userArticle.userPage.readState;
+        page.setReadState(readState);
+        var initialPageReadState = page.getReadState();
+        console.log("initial ReadState: ", initialPageReadState);
+        progress.html(Math.round(initialPageReadState.getPercentComplete()) + "");
       }
       reader.loadPage(page);
       if (page.getBookmarkScrollTop() > window.innerHeight) {
