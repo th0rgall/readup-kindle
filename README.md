@@ -1,7 +1,7 @@
 # Readup Ink - Readup for Kindle
 
-<img src="https://media.discordapp.net/attachments/917433643796946967/1208196656391262218/IMG_6375.jpg?ex=65e267d2&is=65cff2d2&hm=35da5f43fcb184a412e6cbb94d1f963e4e3e531673060e46d332300bb4b4528e&=&format=webp&width=788&height=1050" alt="a readupup.ink article page on a Kindle Paperwhite 3" width=300 />
-<img src="https://media.discordapp.net/attachments/917433643796946967/1208196657318199316/IMG_6376.jpg?ex=65e267d2&is=65cff2d2&hm=7206115d99af05b2e730257b4f9b84083a1ddfa6273c6d1f5ec6f7c202879567&=&format=webp&width=788&height=1050" alt="the readupup.ink homepage on a Kindle Paperwhite 3" width=300 />
+<img src="./docs/img1.jpg" alt="a readupup.ink article page on a Kindle Paperwhite 3" width=300 />
+<img src="./docs/img2.jpg" alt="the readupup.ink homepage on a Kindle Paperwhite 3" width=300 />
 
 A minimal readup.org frontend that I built for the browser of my Kindle
 from 2015.
