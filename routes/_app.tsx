@@ -29,7 +29,12 @@ export default async function App(
   const isIndexPage = ctx.route === "/";
   const isMyReadsPage = ctx.route === "/myreads";
 
-  const isKindle = browser.name === "Kindle" || device.vendor === "Kindle";
+  // Old Paperwhite 2015 Kindle UA:
+  // Mozilla/5.0 (X11; U; Linux armv7l like Android; en-us) AppleWebKit/531.2 (KHTML, like Gecko) Version/5.0 Safari/533.2 Kindle/3.0
+  // Reported Paperwhite 2021 with this UA:
+  // Mozilla/5.0 (X11; U; Linux armv7l like Android; en-us) AppleWebKit/531.2+ (KHTML, Like Gecko) Version/5.0 Safari/533.2+ Kindle/3.0+
+  const isKindle = (browser.name === "Kindle" || device.vendor === "Kindle") &&
+    !(ua?.includes("Kindle/3.0+"));
 
   // Kindle reading in pagination mode
   const isKindlePageReader = isReadPage && isKindle;
