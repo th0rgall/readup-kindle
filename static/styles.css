@@ -42,3 +42,16 @@ html.kindle.reader {
     left: 1.4rem;
     line-height: 1;
 }
+
+/* 
+Use a container media query, which is not supported on old Kindle devices
+to hide the "old kindle mode" button
+*/
+.list-page-wrapper {
+    container-type: inline-size;
+}
+@container (min-width: 0px) {
+     .old-kindle-mode-button {
+        display: none;
+    }
+}

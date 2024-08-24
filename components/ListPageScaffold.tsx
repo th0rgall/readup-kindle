@@ -15,10 +15,16 @@ export default function Scaffold(
     <State.Consumer>
       {({ hasAuth, isKindle }) => (
         <div class="px-6 py-4 max-w-3xl mx-auto justify-center">
-          <div class="overflow-auto">
+          <div class="overflow-auto list-page-wrapper">
             <h1 class="text(2xl gray-600) mt-0.5 font-light float-left font-serif block">
               {TITLE}
             </h1>
+            <button
+              class="ml-3 old-kindle-mode-button"
+              onclick="(function(){document.cookie='isOldKindle=1;path=/;SameSite=Lax;max-age=315360000;'})();"
+            >
+              Old Kindle Mode
+            </button>
             {!hasAuth
               ? (
                 <Button
