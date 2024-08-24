@@ -4,20 +4,28 @@ during a few evenings and weekends as a proof-of-concept.
 If you want to contribute something, no need to worry too much about code
 quality for now!
 
-## Good to know
+## Setup
 
 Copy `.env.sample` to `.env`, changing to your target Readup domain if required
 (the default is readup.org).
 
-The project is split in two parts:
+Now start a dev server:
+
+```
+deno task start
+```
+
+## Good to know
+
+The project is split into two parts:
 
 1. **Deno Fresh server (backend)**:
    - Check `deno.json` & [Deno Fresh docs](https://fresh.deno.dev/) on how to
      get started.
    - We're notably _not_ using
      [client-side interactive islands](https://fresh.deno.dev/docs/concepts/islands)
-     for now, because it would probably a headache to transpile that JS to work
-     on very old Kindle browsers.
+     for now, because it would probably be a headache to transpile that JS to
+     work on very old Kindle browsers.
    - For styling, we're using
      [Twind v0.x](https://twind.dev/handbook/introduction.html), once the Deno
      Fresh default,
@@ -55,6 +63,10 @@ Further:
   These hacks work for my Kindle Paperwhite 3 (2015), but may not look great on
   your specific Kindle. Maybe we can distinguish yours via another specific User
   Agent? And apply different styles? Feel free to experiment!
+
+  In Aug '24,
+  [@deephdave confirmed](https://indieweb.social/@thorgal/113017303769518471)
+  that Readup Ink in "normal mode" works fine on a Kindle Paperwhite from 2021.
 
 ## What's interesting about how this works, technically
 
